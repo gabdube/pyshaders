@@ -1,0 +1,4 @@
+.spyderproject
+*.pyc
+__pycache__
+build
