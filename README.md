@@ -8,8 +8,27 @@ PyShaders was programmed using the same standard of my current company. This mea
 
 ----------
 
-
-[TOC]
+- [PyShaders](#)
+	- [Requirements](#)
+	- [Installation](#)
+		- [Pip](#)
+	- [License](#)
+	- [Programmer's Guide](#)
+		- [High level api](#)
+			- [Compiling shaders](#)
+			- [Uniforms](#)
+			- [Attributes](#)
+			- [Querying shader informations](#)
+		- [Low level api](#)
+			- [Overview](#)
+			- [Owned VS Borrowed](#)
+			- [Integrating with existing code](#)
+	- [API](#)
+		- [Top level functions](#)
+		- [ShaderObject](#)
+		- [ShaderProgram](#)
+		- [Uniforms/Attributes](#)
+	- [Future](#)
 
 
 **Requirements**
@@ -25,6 +44,8 @@ PyShaders was programmed using the same standard of my current company. This mea
 ### Pip
 Run this command:
 >pip install pyshaders
+
+
 ### Manual
 - Download the source
 - Copy **pyshaders.py** in your project
@@ -306,11 +327,13 @@ print(program)
 ### **Top level functions**
 
 >**current_program()**
+>
 >Return the currently bound shader program or None if there is None.
 >The returned shader do not own the underlying buffer.
 
--
+♣
 >**from_string(verts, frags)**
+>
 >High level loading function.  
 >Load a shader using sources passed in sequences of string.
 >Each source is compiled in a shader unique shader object.
@@ -319,8 +342,9 @@ print(program)
 > *verts*: Sequence of vertex shader sources
 > *frags*: Sequence of fragment shader sources
 
--
+♣
 >**from_files_names(verts, frags)**
+>
 > High level loading function.
 >Open files and use 'from_files' and 'from_strings' internally
 >Each source is compiled in a shader unique shader object.
@@ -329,8 +353,9 @@ print(program)
 >*verts*: Sequence of file names pointing to vertex shader source file
 >*frags*: Sequence of file names pointing to fragment shader source file
 
--
+♣
 >**from_files(verts, frags)**
+>
 >High level loading function.  
 >Create a shader from readable IO streams (Such as types returned by open()).
 >from_files will *read()* all the files contents, but it will NOT close the files.
@@ -346,181 +371,231 @@ print(program)
 ### **ShaderObject**
 
 >**ShaderObject(object)**
+>
 > Represent a shader object. This wrapper can be used to get information
 >about a shader object.
 >
 >**Slots**:
+>
 >*sid*: Underlying opengl shader id. 
 >*owned*: If the object owns the underlying shader
 >
 >**Properties**:
+>
 >*source*: The shader source
 >
 >**Readonly Properties**:
+>
 >*logs*: The shader compilation log
+>
 >*type*: The shader type (GL_SHADER_TYPE)
+>
 >*delete_status*: Delete status (GL_DELETE_STATUS)
+>
 >*compiled*: Compile status (GL_COMPILE_STATUS)
+>
 >*log_length*: Logs length (GL_INFO_LOG_LENGTH)
+>
 >*source_length*: Source length (GL_SHADER_SOURCE_LENGTH)
 
--
+♣
 >**ShaderObject.vertex(cls)**
+>
 > Class method, create a new uninitialized vertex shader.
 > The shaderobject owns the gl resource.
 
--
+♣
 >**ShaderObject.fragment(cls)**
+>
 > Class method, create a new uninitialized fragment shader
 > The shaderobject owns the gl resource.
 
--
+♣
 >**ShaderObject.compile(self)**
+>
 > Compile the shader. Return True if the compilation was successful false otherwise 
 
--
+♣
 >**ShaderObject.valid(self)**
+>
 > Check if the underlying shader is valid.
 > Return True if it is, False otherwise.
 
--
+♣
 >**ShaderObject.\_\_init\_\_(self, shader_id, owned=False)**
+>
 >Wrap an existing shader object.
 >          
 > *shader_id*: Shader id. Either a python int or a c_[u]int.
 > *owned*: If the object should own the underlying buffer
 
--
+♣
 >**ShaderObject.\_\_bool\_\_(self)**
+>
 > Like "ShaderObject.valid(self)"
 
--
+♣
 >**ShaderObject.\_\_eq\_\_(self, other)**
+>
 > True if both shaders have the same underlying buffer id. False otherwise
 
 ### **ShaderProgram**
 >**ShaderProgram(object)**
+>
 > Represent a shader program. This wrapper can be used to get information
 >about a shader program. It can also be used to get and set uniforms value
 >of the shader
 >
 >**Slots**:
+>
 >*pid*: Underlying opengl program id.
+>
 >*owned*: If the object owns the underlying shader
+>
 > uniforms: Uniforms collection of the shader
+>
 > attributes: Attributes collection of the shader
 >
 >**Readonly Properties**:
+>
 >*logs*: The shader linking log
+>
 >*delete_status*:  program delete status (GL_DELETE_STATUS)
+>
 >*log_length*:  Logs length (GL_INFO_LOG_LENGTH)
+>
 >*link_status*:  If the program is linked (GL_LINK_STATUS)
+>
 >*validate_status*:  If the program is validated (GL_VALIDATE_STATUS)
+>
 >*shaders_count*:  Number of shaders object attached to the program (GL_ATTACHED_SHADERS)
+>
 >*attributes_count*:  Number of attributes of the program (GL_ACTIVE_ATTRIBUTES)
+>
 >*uniforms_count*:  Number of uniforms (GL_ACTIVE_UNIFORMS)
+>
 >*max_attribute_length*:  Length of the longest attribute name (GL_ACTIVE_ATTRIBUTE_MAX_LENGTH)
+>
 >*max_uniform_length*:  Length of the longest uniform name (GL_ACTIVE_UNIFORM_MAX_LENGTH)
 
-_
+♣
 >**ShaderProgram.new_program(cls)**
+>
 > Create a new program. The object own the ressources
 
-_
+♣
 >**ShaderProgram.attach(*objs)**
- >Attach shader objects to the program. 
+>
+>Attach shader objects to the program. 
 >Objs must be a list of ShaderObject. 
 >
 >Ownership of the underlying shaders object is transferred to the program 
 
-_
+♣
 > **ShaderProgram.detach(self, *objs, delete=True)**
+>
 >Detach shader objects from the program.
 >Objs must be a list of ShaderObject.
 >
 >*delete*: If the detached shaders should be marked for destruction
 
--
+♣
 > **ShaderProgram.valid(self)**
+>
 > Check if the underlying program is valid.
 > Return True if it is, False otherwise.
 
--
+♣
 > **ShaderProgram.link(self)**
+>
 > Link the shader program. Return True if the linking was successful, False otherwise.
 > Also reload the uniform cache is successful
 
--
+♣
 > **ShaderProgram.shaders(self)**
+>
 > Return a list of shader objects linked to the program.
 > The returned shader objects do not own the underlying shader.
 
-_
+♣
 > **ShaderProgram.use(self)**
+>
 > Use the shader program 
 
-_
+♣
 > **ShaderProgram.clear()**
+>
 > Remove the current shader program
 
-_
+♣
 > **ShaderProgram.clear()**
+>
 > Remove the current shader program
 
--
+♣
 >**ShaderProgram.\_\_init\_\_(self, program_id, owned=False)**
+>
 >Wrap an existing shader program.
 >          
 > *program_id*: Program id. Either a python int or a c_[u]int.
 > *owned*: If the object should own the underlying buffer
 
--
+♣
 >**ShaderProgram.\_\_bool\_\_(self)**
+>
 > Like "ShaderProgram.valid(self)"
 
--
+♣
 >**ShaderProgram.\_\_eq\_\_(self, other)**
+>
 > True if both programs have the same underlying buffer id. False otherwise
 
 ### **Uniforms/Attributes**
 
 >**ShaderAccessor(object)**
+>
 >Allow pythonic access to shader uniforms and shader attributes
 >This object is created with a shaderprogram and should not be instanced manually.
 >
 >**Slots**:
+>
 >prog: Weakref to the uniforms shader program
+>
 >cache: Data about the uniforms
+>
 >cache_type: Type of data in cache
 
--
+♣
 >**ShaderAccessor.reload(self)**
+>
 > Reload or build for the first time the uniforms/attributes cache.
+>
 > This can be quite expensive so it is only done on shader linking.
+>
 > If the shader was linked outside the api, you have to call this manually.
 
--
+♣
 >**ShaderAccessor.\_\_iter\_\_(self)**
 >
 >     for uniform in prog.uniforms
 >     
 > Iterate over the Uniform cached in the object. 
 
--
+♣
 >**ShaderAccessor.\_\_len\_\_(self)**
 >
 >     len(prog.uniforms)
 >     
 > Return the number of uniforms in the program
 
--
+♣
 >**ShaderAccessor.\_\_getitem\_\_(self, key)**
 >
 >     prog.uniforms["my_uniform"]
 >     
 > Return information about an uniform. Key must be the name of the uniform as a string.
 
--
+♣
 >**ShaderAccessor.\_\_contains\_\_(self, item)**
 >
 >     if 'my_uniform' in prog.uniforms
