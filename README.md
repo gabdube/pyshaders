@@ -35,7 +35,7 @@ PyShaders was programmed using very high standards. This means that Pyshaders is
 <a name="requirements"/>
 **Requirements**
 -------------
--  Python >= 3.3 <sub><sup>(was developed with python 3.5 but I think 3.3 is OK) </sup></sub>
+-  Python >= 3.3
 -  An GPU that supports OpenGL 2.1 core
 - Pyglet <sub><sup>(See the Future section about supporting other libraries)</sup></sub>
 
@@ -177,6 +177,7 @@ print(uniform)
 **Special setting behaviour**
 
 - Setting incomplete values
+
 Due to ctypes initializing buffers with zeros, setting incomplete values is permitted. The ignored values will be zeroed. Example:
 
 ```python
@@ -200,6 +201,7 @@ shader.uniforms.unicorn_swag = (1.0, 2.0, 3.0, 4.0, 5.0)
 By passing an empty tuple, you can quickly clear any array!
 
 - Setting multi level array
+
 When setting the value of multi-level arrays (ex: vec4[]), pyshaders flatten the values so the layout does not matter. The "depth" of the array **still** matters. Example:
 
 ```python
@@ -362,8 +364,8 @@ print(program)
 >Each source is compiled in a shader unique shader object.
 > Return a linked shaderprogram. The shaderprogram owns the gl resource.
 >
-> *verts*: Sequence of vertex shader sources
-> *frags*: Sequence of fragment shader sources
+>- *verts*: Sequence of vertex shader sources
+>- *frags*: Sequence of fragment shader sources
 
 ♣
 >**from_files_names(verts, frags)**
@@ -373,8 +375,8 @@ print(program)
 >Each source is compiled in a shader unique shader object.
 >Return a linked shaderprogram. The shaderprogram owns the gl resource.
 >
->*verts*: Sequence of file names pointing to vertex shader source file
->*frags*: Sequence of file names pointing to fragment shader source file
+>- *verts*: Sequence of file names pointing to vertex shader source file
+>- *frags*: Sequence of file names pointing to fragment shader source file
 
 ♣
 >**from_files(verts, frags)**
@@ -388,8 +390,8 @@ print(program)
 >Each source is compiled in a shader unique shader object.
 >Return a linked shaderprogram. The shaderprogram owns the gl resource.
 >
->*verts*: Sequence of files pointing to vertex shader source file
->*frags*: Sequence of files pointing to a fragment shader source file
+>- *verts*: Sequence of files pointing to vertex shader source file
+>- *frags*: Sequence of files pointing to a fragment shader source file
 
 
 <a name="shaderobject"/>
@@ -402,12 +404,12 @@ print(program)
 >
 >**Slots**:
 >
->*sid*: Underlying opengl shader id. 
->*owned*: If the object owns the underlying shader
+> -*sid*: Underlying opengl shader id. 
+>- *owned*: If the object owns the underlying shader
 >
 >**Properties**:
 >
->*source*: The shader source
+>- *source*: The shader source
 >
 >**Readonly Properties**:
 >
@@ -470,13 +472,10 @@ print(program)
 >
 >**Slots**:
 >
->*pid*: Underlying opengl program id.
->
->*owned*: If the object owns the underlying shader
->
-> uniforms: Uniforms collection of the shader
->
-> attributes: Attributes collection of the shader
+>- *pid*: Underlying opengl program id.
+>- *owned*: If the object owns the underlying shader
+>- *uniforms*: Uniforms collection of the shader
+>- *attributes*: Attributes collection of the shader
 >
 >**Readonly Properties**:
 >
@@ -510,7 +509,7 @@ print(program)
 >Detach shader objects from the program.
 >Objs must be a list of ShaderObject.
 >
->*delete*: If the detached shaders should be marked for destruction
+>- *delete*: If the detached shaders should be marked for destruction
 
 ♣
 > **ShaderProgram.valid(self)**
@@ -550,8 +549,8 @@ print(program)
 >
 >Wrap an existing shader program.
 >          
-> *program_id*: Program id. Either a python int or a c_[u]int.
-> *owned*: If the object should own the underlying buffer
+>- *program_id*: Program id. Either a python int or a c_[u]int.
+>- *owned*: If the object should own the underlying buffer
 
 ♣
 >**ShaderProgram.\_\_bool\_\_(self)**
@@ -574,11 +573,9 @@ print(program)
 >
 >**Slots**:
 >
->prog: Weakref to the uniforms shader program
->
->cache: Data about the uniforms
->
->cache_type: Type of data in cache
+>- prog: Weakref to the uniforms shader program
+>- cache: Data about the uniforms
+>- cache_type: Type of data in cache
 
 ♣
 >**ShaderAccessor.reload(self)**
