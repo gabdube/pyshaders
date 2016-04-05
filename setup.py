@@ -8,5 +8,6 @@ setup(name='pyshaders',
       author='Gabriel Dubé',
       author_email='gdube@azanka.ca',
       license='MIT',
+      url= 'https://github.com/gabdube/pyshaders',
       py_modules=('pyshaders',)
      )
