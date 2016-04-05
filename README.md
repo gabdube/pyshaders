@@ -2,7 +2,7 @@ PyShaders
 ===================
 
 
-Pyshaders aims to completely wraps the opengl2.1 shader api in a python module. Pyshaders provides a pythonic clear OOP api that hides the lower level (ctypes) calls. Pyshaders provides a high level api and a low level api, and it can be integrated easily with existing code because it do not occlude the underlying opengl values.
+Pyshaders aims to completely wraps the opengl2.1 shader api in a python module. Pyshaders provides a pythonic OOP api that hides the lower level (ctypes) calls. Pyshaders provides a high level api and a low level api, and it can be integrated easily with existing code because it does not occlude the underlying opengl values.
 
 PyShaders was programmed using very high standards. This means that Pyshaders is fully tested and it comes with an exhaustive documentation (this file). The code is DRYer than California in 2015 and it makes uses of many advanced python functionalities to make the code smaller, easier to use and easier to read.
 
