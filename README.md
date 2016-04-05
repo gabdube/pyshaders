@@ -12,7 +12,7 @@ PyShaders was programmed using very high standards. This means that Pyshaders is
 	- [Requirements](#requirements)
 	- [Installation](#installation)
 		- [Pip](#pip)
-          - [Manual](#manual)
+		- [Manual](#manual)
 	- [License](#license)
 	- [Programmer's Guide](#guide)
 		- [High level api](#high)
@@ -116,7 +116,6 @@ from pyshaders import from_files_names, ShaderCompilationError
 try:
     shader = from_files_names("main.vert", "main.frag")
     shader2 = from_files_names("main.vert", ["main.frag", "lib.frag"])
-    shader3 = from_files_names("*.vert", "main.frag") #wildcards!
 except ShaderCompilationError as e:
     print(e.logs)
 
@@ -132,7 +131,7 @@ ShaderProgram.clear() # or shader.clear()
 ```
 
 **What happens during the compilation?**
-- **from_files_names** uses **glob** to find the files. 
+- **from_files_names** open the files
 - The files contents are loaded into strings
 - For every source given, a **ShaderObject** is compiled (see Low Level API)
 - The compiled **ShaderObjects** are linked to a **ShaderProgram**
