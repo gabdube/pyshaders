@@ -4,33 +4,35 @@ PyShaders
 
 Pyshaders aims to completely wraps the opengl2.1 shader api in a python module. Pyshaders provides a pythonic clear OOP api that hides the lower level (ctypes) calls. Pyshaders provides a high level api and a low level api, and it can be integrated easily with existing code because it do not occlude the underlying opengl values.
 
-PyShaders was programmed using the same standard of my current company. This means that Pyshaders is fully tested and it comes with an exhaustive documentation (this file). The code is DRYer than California in 2015 and it makes uses of many advanced python functionalities to make the code smaller, easier to use and easier to read.
+PyShaders was programmed using very high standards. This means that Pyshaders is fully tested and it comes with an exhaustive documentation (this file). The code is DRYer than California in 2015 and it makes uses of many advanced python functionalities to make the code smaller, easier to use and easier to read.
 
 ----------
 
 - [PyShaders](#)
-	- [Requirements](#)
-	- [Installation](#)
-		- [Pip](#)
-	- [License](#)
-	- [Programmer's Guide](#)
-		- [High level api](#)
-			- [Compiling shaders](#)
-			- [Uniforms](#)
-			- [Attributes](#)
-			- [Querying shader informations](#)
-		- [Low level api](#)
-			- [Overview](#)
-			- [Owned VS Borrowed](#)
-			- [Integrating with existing code](#)
-	- [API](#)
-		- [Top level functions](#)
-		- [ShaderObject](#)
-		- [ShaderProgram](#)
-		- [Uniforms/Attributes](#)
-	- [Future](#)
+	- [Requirements](#requirements)
+	- [Installation](#installation)
+		- [Pip](#pip)
+          - [Manual](#manual)
+	- [License](#license)
+	- [Programmer's Guide](#guide)
+		- [High level api](#high)
+			- [Compiling shaders](#compiling)
+			- [Uniforms](#uniforms)
+			- [Attributes](#attributes)
+			- [Querying shader informations](#query)
+		- [Low level api](#low)
+			- [Overview](#lowover)
+			- [Owned VS Borrowed](#owned)
+			- [Integrating with existing code](#integrate)
+	- [API](#api)
+		- [Top level functions](#top)
+		- [ShaderObject](#shaderobject)
+		- [ShaderProgram](#shaderprogram)
+		- [Uniforms/Attributes](#uniattr)
+	- [Future](#future)
 
 
+<a name="requirements"/>
 **Requirements**
 -------------
 -  Python >= 3.3 <sub><sup>(was developed with python 3.5 but I think 3.3 is OK) </sup></sub>
@@ -38,21 +40,27 @@ PyShaders was programmed using the same standard of my current company. This mea
 - Pyglet <sub><sup>(See the Future section about supporting other libraries)</sup></sub>
 
 
+<a name="installation"/>
 **Installation**
 -------------
 
+<a name="pip"/>
 ### Pip
 Run this command:
 >pip install pyshaders
 
 
+<a name="manual"/>
 ### Manual
 - Download the source
 - Copy **pyshaders.py** in your project
+
 **or**
+
 - Run **python setup.py install**
 
 
+<a name="license"/>
 License
 -------------
 
@@ -78,13 +86,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+
+<a name="guide"/>
 Programmer's Guide
 -------------
 
+<a name="high"/>
 ###**High level api**
 Unless you are extending an existing code base, the high level api is most likely the api you want to use. 
 It handles compiling, uniforms, attributes and freeing.
 
+<a name="compiling"/>
 #### **Compiling shaders**
 Pyshaders offers 3 high level functions to load and compile shaders, here are their headers:
 ```python
@@ -129,6 +141,7 @@ ShaderProgram.clear() # or shader.clear()
 
 
 
+<a name="uniforms"/>
 #### **Uniforms**
 
 My favorite feature, pyshaders allows seamless uniform writing and reading. After a shader is compiled, all its defined uniforms are accessible via the **uniforms** attribute. Example:
@@ -207,6 +220,7 @@ print(shader.uniforms.blushing_wombat)
 shader.uniforms.blushing_wombat = (5.0, 3.0, 2.0, 7.0, 1.0, 1.5)
 ```
 
+<a name="attributes"/>
 #### **Attributes**
 
 Shader attributes do not have a get/set syntax like the uniforms (for now), but the properties of the attributes can be accessed like with the uniforms: using the dictionary syntax. The attributes information is queried using **[glGetActiveAttrib](http://docs.gl/gl2/glGetActiveAttrib)**
@@ -221,6 +235,7 @@ print(attribute)
 ```
 
 
+<a name="query"/>
 #### **Querying shader informations**
 
 With OpenGL is is possible query information about a shader (information that would be queried with a glGet* call). With pyshaders, it is possible to access these values with python properties. For an exhaustive list of every properties, see the API section. Example:
@@ -231,10 +246,13 @@ shader.compiled  # Equivalent to glGetProgram with GL_COMPILE_STATUS
 #true
 ```
 
+<a name="low"/>
 ### **Low level api**
 
 The low level api can be used if someone wants full control over the compilation and linking stage.
 
+
+<a name="lowover"/>
 #### **Overview**
 
 When using the low level api, it's the programmer job to create, compile, link and free the pyshaders objects. The main advantage is that it is possible share ShaderObjects with many ShaderProgram. 
@@ -280,6 +298,7 @@ def from_string(verts, frags):
     raise ShaderCompilationError(logs)
 ```
 
+<a name="owned"/>
 #### **Owned VS Borrowed**
 
 Pyshaders objects wraps underlying globjects. Usually,  pyobjects **own** the underlying data. This means that, when the object is freed (garbage collected), the globjects is marked for deletion (ex: using **glDeleteShader**). Sometimes, a single globject can be shared with multiple pyobjects. In this situation, only one object should have the ownership. The others "borrow" the globject. When an pyobject with a borrowed status is freed,  the underlying globject is not marked for deletion.
@@ -295,6 +314,7 @@ Example:
 shader.detach(shared_object, delete=False)
 ```
 
+<a name="integrate"/>
 #### **Integrating with existing code**
 
 It is possible to wrap existing object with pyshader using the ShaderObject and ShaderProgram constructors.
@@ -321,9 +341,12 @@ print(program)
 # ShaderProgram 1
 ```
 
+
+<a name="api"/>
 **API**
 -------------
 
+<a name="top"/>
 ### **Top level functions**
 
 >**current_program()**
@@ -368,6 +391,8 @@ print(program)
 >*verts*: Sequence of files pointing to vertex shader source file
 >*frags*: Sequence of files pointing to a fragment shader source file
 
+
+<a name="shaderobject"/>
 ### **ShaderObject**
 
 >**ShaderObject(object)**
@@ -386,17 +411,12 @@ print(program)
 >
 >**Readonly Properties**:
 >
->*logs*: The shader compilation log
->
->*type*: The shader type (GL_SHADER_TYPE)
->
->*delete_status*: Delete status (GL_DELETE_STATUS)
->
->*compiled*: Compile status (GL_COMPILE_STATUS)
->
->*log_length*: Logs length (GL_INFO_LOG_LENGTH)
->
->*source_length*: Source length (GL_SHADER_SOURCE_LENGTH)
+>- *logs*: The shader compilation log
+>- *type*: The shader type (GL_SHADER_TYPE)
+>- *delete_status*: Delete status (GL_DELETE_STATUS)
+>- *compiled*: Compile status (GL_COMPILE_STATUS)
+>- *log_length*: Logs length (GL_INFO_LOG_LENGTH)
+>- *source_length*: Source length (GL_SHADER_SOURCE_LENGTH)
 
 ♣
 >**ShaderObject.vertex(cls)**
@@ -439,6 +459,8 @@ print(program)
 >
 > True if both shaders have the same underlying buffer id. False otherwise
 
+
+<a name="shaderprogram"/>
 ### **ShaderProgram**
 >**ShaderProgram(object)**
 >
@@ -458,25 +480,16 @@ print(program)
 >
 >**Readonly Properties**:
 >
->*logs*: The shader linking log
->
->*delete_status*:  program delete status (GL_DELETE_STATUS)
->
->*log_length*:  Logs length (GL_INFO_LOG_LENGTH)
->
->*link_status*:  If the program is linked (GL_LINK_STATUS)
->
->*validate_status*:  If the program is validated (GL_VALIDATE_STATUS)
->
->*shaders_count*:  Number of shaders object attached to the program (GL_ATTACHED_SHADERS)
->
->*attributes_count*:  Number of attributes of the program (GL_ACTIVE_ATTRIBUTES)
->
->*uniforms_count*:  Number of uniforms (GL_ACTIVE_UNIFORMS)
->
->*max_attribute_length*:  Length of the longest attribute name (GL_ACTIVE_ATTRIBUTE_MAX_LENGTH)
->
->*max_uniform_length*:  Length of the longest uniform name (GL_ACTIVE_UNIFORM_MAX_LENGTH)
+>- *logs*: The shader linking log
+>- *delete_status*:  program delete status (GL_DELETE_STATUS)
+>- *log_length*:  Logs length (GL_INFO_LOG_LENGTH)
+>- *link_status*:  If the program is linked (GL_LINK_STATUS)
+>- *validate_status*:  If the program is validated (GL_VALIDATE_STATUS)
+>- *shaders_count*:  Number of shaders object attached to the program (GL_ATTACHED_SHADERS)
+>- *attributes_count*:  Number of attributes of the program (GL_ACTIVE_ATTRIBUTES)
+>- *uniforms_count*:  Number of uniforms (GL_ACTIVE_UNIFORMS)
+>- *max_attribute_length*:  Length of the longest attribute name (GL_ACTIVE_ATTRIBUTE_MAX_LENGTH)
+>- *max_uniform_length*:  Length of the longest uniform name (GL_ACTIVE_UNIFORM_MAX_LENGTH)
 
 ♣
 >**ShaderProgram.new_program(cls)**
@@ -550,6 +563,8 @@ print(program)
 >
 > True if both programs have the same underlying buffer id. False otherwise
 
+
+<a name="uniattr"/>
 ### **Uniforms/Attributes**
 
 >**ShaderAccessor(object)**
@@ -603,6 +618,8 @@ print(program)
 > Return True if an uniform is within the program, Item can be the name of the uniform as a string OR
 > a uniform object. 
 
+
+<a name="future"/>
 **Future**
 -------------
 
@@ -626,3 +643,4 @@ Could be added as an extension:
 Will not be added:
 
 - SPIR-V
+
