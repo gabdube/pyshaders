@@ -117,10 +117,11 @@ try:
     shader = from_files_names("main.vert", "main.frag")
     shader2 = from_files_names("main.vert", ["main.frag", "lib.frag"])
 except ShaderCompilationError as e:
-    print(e.logs)
+    print(e.logs) 
+    exit()
 
-print(shader, shader2, shader3, sep=", ")
-#ShaderProgram 1, ShaderProgram 2, ShaderProgram 3
+print(shader, shader2, sep=", ")
+#ShaderProgram 1, ShaderProgram 2
 ```
 
 
