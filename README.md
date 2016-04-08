@@ -14,6 +14,10 @@ PyShaders was programmed using very high standards. This means that Pyshaders is
 		- [Pip](#pip)
 		- [Manual](#manual)
 	- [License](#license)
+	- [Extensions](#extensions)
+	  - [Overview](#extensions_overview)
+	  - [Usage](#extensions_usage)
+	  - [All extensions](#extensions_all)
 	- [Programmer's Guide](#guide)
 		- [High level api](#high)
 			- [Compiling shaders](#compiling)
@@ -32,35 +36,41 @@ PyShaders was programmed using very high standards. This means that Pyshaders is
 	- [Future](#future)
 
 
-<a name="requirements"/>
+<a name="requirements"></a>
+
 **Requirements**
 -------------
--  Python >= 3.3
--  An GPU that supports OpenGL 2.1 core
-- Pyglet <sub><sup>(See the Future section about supporting other libraries)</sup></sub>
+- Python >= 3.3
+- An GPU that supports OpenGL 2.1 core
+- Pyglet (any versions) <sub><sup>(See the Future section about supporting other libraries)</sup></sub>
 
 
-<a name="installation"/>
+<a name="installation"></a>
+
 **Installation**
 -------------
 
-<a name="pip"/>
+<a name="pip"></a>
+
 ### Pip
-Run this command:
->pip install pyshaders
+Run this command
+>pip install pyshaders [--install-option="--no-extensions"]
 
+<a name="manual"></a>
 
-<a name="manual"/>
 ### Manual
-- Download the source
-- Copy **pyshaders.py** in your project
+1. Download the source
+2. Copy **pyshaders.py** in your project
+3. **Optionally** copy **pyshaders_extensions** in the same folder (see [extensions](#extensions))  
 
 **or**
 
-- Run **python setup.py install**
+1. Download the source
+2. Run **python setup.py install [--no_extensions]** 
 
 
-<a name="license"/>
+<a name="license"></a>
+
 License
 -------------
 
@@ -86,17 +96,77 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+<a name="extensions"></a>
 
-<a name="guide"/>
+Extensions
+--------------
+**new in 1.1.0!**  
+
+<a name="extensions_overview"></a>
+
+### Overview
+By default, pyshaders only wraps the api of opengl 2.1. In order to wrap newer features that might not be supported on older hardware, pyshaders uses **extension modules**. Extensions modules are python modules located in the **pyshaders_extensions** package. These modules **must not be imported using the import keyword**, instead they are loaded using the **load_extension** function. load_extension checks if the client supports the extension and a few other things, if something is wrong **ImportError** or a **PyShadersExtensionError** error is raised.
+
+Extensions modules must not be imported using the **import keyword** because an extension module by itself do nothing: their roles are to register new functionalities inside the pyshaders module.
+
+Lastly, extensions **must be loaded before using the pyshader api**. 
+
+<a name="extensions_usage"></a>
+
+### Usage
+
+Pyshaders offers three top levels functions to manage extensions.
+
+```python
+def extension_loaded(extension_name):
+def check_extension(extension_name):
+def load_extension(extension_name):
+```
+
+**extension_name** is any of the extension under [All Extensions](%extensions_all).
+
+**extension_loaded** checks if an extension was loaded. An extension cannot be loaded more than once.  
+**check_extension** checks if the client can use the extension  
+**load_extension** loads the extension
+
+Example:  
+```python
+from pyshaders import load_extension, extension_loaded,  check_extension, PyShadersExtensionError
+try:
+    load_extension('uint_uniforms')
+except PyShadersExtensionError:
+    print("Your system do not meet the requirements to use this program")
+    exit()
+    
+print(extension_loaded('uint_uniforms'))
+# True
+
+print(check_extension('uint_uniforms'))
+# True
+```
+
+<a name="extensions_all"></a>
+
+### All extensions
+
+| Name          | Requirements             | Pyshaders Version | Description |
+| ------------- | ------------------------ | ----------------- | ----------- |
+| uint_uniforms | GL >= 3.0 / GLSL >= 1.30 | 1.1.0             | Add support for unsigned integers uniforms |
+
+
+<a name="guide"></a>
+
 Programmer's Guide
 -------------
 
-<a name="high"/>
+<a name="high"></a>
+
 ###**High level api**
 Unless you are extending an existing code base, the high level api is most likely the api you want to use. 
 It handles compiling, uniforms, attributes and freeing.
 
-<a name="compiling"/>
+<a name="compiling"></a>
+
 #### **Compiling shaders**
 Pyshaders offers 3 high level functions to load and compile shaders, here are their headers:
 ```python
@@ -141,7 +211,8 @@ ShaderProgram.clear() # or shader.clear()
 
 
 
-<a name="uniforms"/>
+<a name="uniforms"></a>
+
 #### **Uniforms**
 
 My favorite feature, pyshaders allows seamless uniform writing and reading. After a shader is compiled, all its defined uniforms are accessible via the **uniforms** attribute. Example:
@@ -222,7 +293,8 @@ print(shader.uniforms.blushing_wombat)
 shader.uniforms.blushing_wombat = (5.0, 3.0, 2.0, 7.0, 1.0, 1.5)
 ```
 
-<a name="attributes"/>
+<a name="attributes"></a>
+
 #### **Attributes**
 
 Shader attributes do not have a get/set syntax like the uniforms (for now), but the properties of the attributes can be accessed like with the uniforms: using the dictionary syntax. The attributes information is queried using **[glGetActiveAttrib](http://docs.gl/gl2/glGetActiveAttrib)**
@@ -237,7 +309,8 @@ print(attribute)
 ```
 
 
-<a name="query"/>
+<a name="query"></a>
+
 #### **Querying shader informations**
 
 With OpenGL is is possible query information about a shader (information that would be queried with a glGet* call). With pyshaders, it is possible to access these values with python properties. For an exhaustive list of every properties, see the API section. Example:
@@ -248,13 +321,14 @@ shader.compiled  # Equivalent to glGetProgram with GL_COMPILE_STATUS
 #true
 ```
 
-<a name="low"/>
+<a name="low"></a>
 ### **Low level api**
 
 The low level api can be used if someone wants full control over the compilation and linking stage.
 
 
-<a name="lowover"/>
+<a name="lowover"></a>
+
 #### **Overview**
 
 When using the low level api, it's the programmer job to create, compile, link and free the pyshaders objects. The main advantage is that it is possible share ShaderObjects with many ShaderProgram. 
@@ -300,7 +374,8 @@ def from_string(verts, frags):
     raise ShaderCompilationError(logs)
 ```
 
-<a name="owned"/>
+<a name="owned"></a>
+
 #### **Owned VS Borrowed**
 
 Pyshaders objects wraps underlying globjects. Usually,  pyobjects **own** the underlying data. This means that, when the object is freed (garbage collected), the globjects is marked for deletion (ex: using **glDeleteShader**). Sometimes, a single globject can be shared with multiple pyobjects. In this situation, only one object should have the ownership. The others "borrow" the globject. When an pyobject with a borrowed status is freed,  the underlying globject is not marked for deletion.
@@ -316,7 +391,8 @@ Example:
 shader.detach(shared_object, delete=False)
 ```
 
-<a name="integrate"/>
+<a name="integrate"></a>
+
 #### **Integrating with existing code**
 
 It is possible to wrap existing object with pyshader using the ShaderObject and ShaderProgram constructors.
@@ -344,21 +420,20 @@ print(program)
 ```
 
 
-<a name="api"/>
+<a name="api"></a>
+
 **API**
 -------------
 
 <a name="top"/>
 ### **Top level functions**
 
->**current_program()**
->
+>**current_program()**  
 >Return the currently bound shader program or None if there is None.
 >The returned shader do not own the underlying buffer.
 
 ♣
->**from_string(verts, frags)**
->
+>**from_string(verts, frags)**  
 >High level loading function.  
 >Load a shader using sources passed in sequences of string.
 >Each source is compiled in a shader unique shader object.
@@ -368,8 +443,7 @@ print(program)
 >- *frags*: Sequence of fragment shader sources
 
 ♣
->**from_files_names(verts, frags)**
->
+>**from_files_names(verts, frags)**  
 > High level loading function.
 >Open files and use 'from_files' and 'from_strings' internally
 >Each source is compiled in a shader unique shader object.
@@ -379,8 +453,7 @@ print(program)
 >- *frags*: Sequence of file names pointing to fragment shader source file
 
 ♣
->**from_files(verts, frags)**
->
+>**from_files(verts, frags)**  
 >High level loading function.  
 >Create a shader from readable IO streams (Such as types returned by open()).
 >from_files will *read()* all the files contents, but it will NOT close the files.
@@ -393,26 +466,40 @@ print(program)
 >- *verts*: Sequence of files pointing to vertex shader source file
 >- *frags*: Sequence of files pointing to a fragment shader source file
 
+♣
+
+>**extension_loaded(extension_name)**  
+>Return True if the extension is loaded, False otherwise.  
+>- *extension_name*: Name of the extension to check
+
+♣
+
+>**check_extension(extension_name)**  
+>Return True if the client can use the extension, False otherwise  
+>- *extension_name*: Name of the extension to check
+
+♣
+
+>**load_extension(extension_name)**  
+> Load the extension. Will raise an ImportError if the extension was already loaded
+> or a PyShadersExtensionError if the extension is not supported by the client.  
+>- *extension_name*: Name of the extension to check
 
 <a name="shaderobject"/>
 ### **ShaderObject**
 
->**ShaderObject(object)**
->
+>**ShaderObject(object)**  
 > Represent a shader object. This wrapper can be used to get information
 >about a shader object.
 >
->**Slots**:
+>**Slots**:  
+> - *sid*: Underlying opengl shader id. 
+> - *owned*: If the object owns the underlying shader
 >
-> -*sid*: Underlying opengl shader id. 
->- *owned*: If the object owns the underlying shader
->
->**Properties**:
->
+>**Properties**:  
 >- *source*: The shader source
 >
->**Readonly Properties**:
->
+>**Readonly Properties**:  
 >- *logs*: The shader compilation log
 >- *type*: The shader type (GL_SHADER_TYPE)
 >- *delete_status*: Delete status (GL_DELETE_STATUS)
@@ -421,64 +508,55 @@ print(program)
 >- *source_length*: Source length (GL_SHADER_SOURCE_LENGTH)
 
 ♣
->**ShaderObject.vertex(cls)**
->
+>**ShaderObject.vertex(cls)**  
 > Class method, create a new uninitialized vertex shader.
 > The shaderobject owns the gl resource.
 
 ♣
->**ShaderObject.fragment(cls)**
->
+>**ShaderObject.fragment(cls)**  
 > Class method, create a new uninitialized fragment shader
 > The shaderobject owns the gl resource.
 
 ♣
->**ShaderObject.compile(self)**
->
+>**ShaderObject.compile(self)**  
 > Compile the shader. Return True if the compilation was successful false otherwise 
 
 ♣
->**ShaderObject.valid(self)**
->
+>**ShaderObject.valid(self)**  
 > Check if the underlying shader is valid.
 > Return True if it is, False otherwise.
 
 ♣
->**ShaderObject.\_\_init\_\_(self, shader_id, owned=False)**
->
+>**ShaderObject.\_\_init\_\_(self, shader_id, owned=False)**  
 >Wrap an existing shader object.
 >          
 > *shader_id*: Shader id. Either a python int or a c_[u]int.
 > *owned*: If the object should own the underlying buffer
 
 ♣
->**ShaderObject.\_\_bool\_\_(self)**
->
+>**ShaderObject.\_\_bool\_\_(self)**  
 > Like "ShaderObject.valid(self)"
 
 ♣
->**ShaderObject.\_\_eq\_\_(self, other)**
->
+>**ShaderObject.\_\_eq\_\_(self, other)**  
 > True if both shaders have the same underlying buffer id. False otherwise
 
 
 <a name="shaderprogram"/>
+
 ### **ShaderProgram**
->**ShaderProgram(object)**
->
+>**ShaderProgram(object)**  
 > Represent a shader program. This wrapper can be used to get information
 >about a shader program. It can also be used to get and set uniforms value
 >of the shader
 >
->**Slots**:
->
+>**Slots**:  
 >- *pid*: Underlying opengl program id.
 >- *owned*: If the object owns the underlying shader
 >- *uniforms*: Uniforms collection of the shader
 >- *attributes*: Attributes collection of the shader
 >
->**Readonly Properties**:
->
+>**Readonly Properties**:  
 >- *logs*: The shader linking log
 >- *delete_status*:  program delete status (GL_DELETE_STATUS)
 >- *log_length*:  Logs length (GL_INFO_LOG_LENGTH)
@@ -491,95 +569,80 @@ print(program)
 >- *max_uniform_length*:  Length of the longest uniform name (GL_ACTIVE_UNIFORM_MAX_LENGTH)
 
 ♣
->**ShaderProgram.new_program(cls)**
->
+>**ShaderProgram.new_program(cls)**  
 > Create a new program. The object own the ressources
 
 ♣
->**ShaderProgram.attach(*objs)**
->
+>**ShaderProgram.attach(*objs)**  
 >Attach shader objects to the program. 
 >Objs must be a list of ShaderObject. 
 >
 >Ownership of the underlying shaders object is transferred to the program 
 
 ♣
-> **ShaderProgram.detach(self, *objs, delete=True)**
->
+> **ShaderProgram.detach(self, *objs, delete=True)**  
 >Detach shader objects from the program.
 >Objs must be a list of ShaderObject.
 >
 >- *delete*: If the detached shaders should be marked for destruction
 
 ♣
-> **ShaderProgram.valid(self)**
->
+> **ShaderProgram.valid(self)** 
 > Check if the underlying program is valid.
 > Return True if it is, False otherwise.
 
 ♣
-> **ShaderProgram.link(self)**
->
+> **ShaderProgram.link(self)**  
 > Link the shader program. Return True if the linking was successful, False otherwise.
 > Also reload the uniform cache is successful
 
 ♣
-> **ShaderProgram.shaders(self)**
->
+> **ShaderProgram.shaders(self)**  
 > Return a list of shader objects linked to the program.
 > The returned shader objects do not own the underlying shader.
 
 ♣
-> **ShaderProgram.use(self)**
->
+> **ShaderProgram.use(self)**  
 > Use the shader program 
 
 ♣
-> **ShaderProgram.clear()**
->
+> **ShaderProgram.clear()**  
 > Remove the current shader program
 
 ♣
-> **ShaderProgram.clear()**
->
+> **ShaderProgram.clear()**  
 > Remove the current shader program
 
 ♣
->**ShaderProgram.\_\_init\_\_(self, program_id, owned=False)**
->
+>**ShaderProgram.\_\_init\_\_(self, program_id, owned=False)**  
 >Wrap an existing shader program.
 >          
 >- *program_id*: Program id. Either a python int or a c_[u]int.
 >- *owned*: If the object should own the underlying buffer
 
 ♣
->**ShaderProgram.\_\_bool\_\_(self)**
->
+>**ShaderProgram.\_\_bool\_\_(self)**  
 > Like "ShaderProgram.valid(self)"
 
 ♣
->**ShaderProgram.\_\_eq\_\_(self, other)**
->
+>**ShaderProgram.\_\_eq\_\_(self, other)**  
 > True if both programs have the same underlying buffer id. False otherwise
 
 
 <a name="uniattr"/>
 ### **Uniforms/Attributes**
 
->**ShaderAccessor(object)**
->
+>**ShaderAccessor(object)**  
 >Allow pythonic access to shader uniforms and shader attributes
 >This object is created with a shaderprogram and should not be instanced manually.
 >
->**Slots**:
->
+>**Slots**:  
 >- prog: Weakref to the uniforms shader program
 >- cache: Data about the uniforms
 >- cache_type: Type of data in cache
 
 ♣
->**ShaderAccessor.reload(self)**
->
+>**ShaderAccessor.reload(self)**  
 > Reload or build for the first time the uniforms/attributes cache.
 >
 > This can be quite expensive so it is only done on shader linking.
@@ -616,11 +679,12 @@ print(program)
 > a uniform object. 
 
 
-<a name="future"/>
+<a name="future"></a>
+
 **Future**
 -------------
 
-I dont think that I will add new features to the main module (pyshaders.py), at least, nothing that will break compatibility. Any feature not supported by OpenGL 2.1 will **never** be added to the main module. For those, I'm thinking about adding "extensions" modules that, when imported, will add functionalities to the module. I'll still need to think about it. 
+I dont think that I will add new features to the main module (pyshaders.py), at least, nothing that will break compatibility. Any feature not supported by OpenGL 2.1 will **never** be added to the main module. For those, extensions will be created. For more informations on extensions see [extensions](#extensions).
 
 Could be added to the main module:
 
@@ -630,7 +694,7 @@ Could be added to the main module:
 
 Could be added as an extension:
 
-- Support for **double, uint and boolean** uniforms
+- ~~Support for **double, uint and boolean** uniforms~~ (implemented in 1.1.0)
 - Support for multi level array ( GL_ARB_arrays_of_arrays ) 
 - Uniform structures
 - Uniform blocks
@@ -640,4 +704,8 @@ Could be added as an extension:
 Will not be added:
 
 - SPIR-V
+
+
+
+
 

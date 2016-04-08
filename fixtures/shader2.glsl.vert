@@ -1,6 +1,6 @@
-#version 330 core
+#version 130
 
-layout(location = 0)in vec3 vert;
+in vec3 vert;
 
 uniform mat3 view;
 uniform mat3 model;

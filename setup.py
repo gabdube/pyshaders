@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='pyshaders',
-      version='1.0.0',
+      version='1.1.0',
       description='OpenGL shader wrapper for python',
       author='Gabriel Dubé',
       author_email='gdube@azanka.ca',

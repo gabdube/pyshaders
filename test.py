@@ -7,11 +7,13 @@ from ctypes import c_char_p, cast
 import pyglet
 from pyglet.gl import (glIsShader, GL_FALSE, GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,
   glCreateShader, GL_TRUE, glDeleteShader, glIsProgram, glCreateProgram,
-  glDeleteProgram)
+  glDeleteProgram, gl_info, glGetString, GL_SHADING_LANGUAGE_VERSION)
 
+import pyshaders
 from pyshaders import (ShaderObject, ShaderCompilationError, shader_source,
   ShaderProgram, from_files, from_files_names, current_program, GL_FLOAT_MAT3,
-  GL_FLOAT_VEC3)
+  GL_FLOAT_VEC3, load_extension, check_extension, PyShadersExtensionError,
+  extension_loaded)
 
 vert_path = lambda fname: 'fixtures\\{}.glsl.vert'.format(fname)
 frag_path = lambda fname: 'fixtures\\{}.glsl.frag'.format(fname)
@@ -632,9 +634,102 @@ class TestShaders(unittest.TestCase):
         
     def test_from_string(self):
         """
-        Because from_string is used internally by from_files and from_file_names
+        Because from_string is used internally by from_files and from_file_names,
         I think it is safe to say the function is well tested
         """
+
+EXTENSIONS_WARNINGS = []
+
+def cannot_test(gl_version, glsl_version):
+    glsl = bytearray()
+    for i in glGetString(GL_SHADING_LANGUAGE_VERSION):
+        if i != 0:
+            glsl.append(i)
+        else:
+            break
+    
+    glsl = [ int(v) for v in glsl.decode('utf8').split('.')]
+    
+    gl_ok = gl_info.have_version(*gl_version)
+    glsl_ok = (glsl[0] > glsl_version[0]) or (glsl[0] == glsl_version[0] and glsl[1] >= glsl_version[1])
+    
+    return not gl_ok or not glsl_ok
+
+class TestExtensions(unittest.TestCase):
+    
+    @unittest.skipIf(cannot_test((3,0), (1,30)), "function requires opengl 3.0 and GLSL 1.30 support to be tested")    
+    def test_load(self):
+        " Test extension loading "
+        
+        load_extension('uint_uniforms')
+        
+        with self.assertRaises(ImportError) as cm1:
+            load_extension('foo_bar')        
+        
+        with self.assertRaises(PyShadersExtensionError) as cm2:
+            load_extension('create_mmo')
+            
+        with self.assertRaises(ImportError) as cm3:
+            load_extension('uint_uniforms')      
+        
+        self.assertEqual('No extension named "foo_bar" found', str(cm1.exception), 'Exception do not matches')
+        self.assertEqual('Extension "create_mmo" is not supported', str(cm2.exception), 'Exception do not matches')
+        self.assertEqual('Extension "uint_uniforms" is already loaded', str(cm3.exception), 'Exception do not matches')
+        
+        self.assertIn('uint_uniforms', pyshaders.LOADED_EXTENSIONS, 'Extension name is not in the loaded extensions')
+        self.assertTrue(extension_loaded('uint_uniforms'), 'Extension name is not in the loaded extensions')
+        self.assertNotIn('create_mmo', pyshaders.LOADED_EXTENSIONS, 'Extension name is in the loaded extensions')
+        self.assertNotIn('foo_bar', pyshaders.LOADED_EXTENSIONS, 'Extension name is in the loaded extensions')
+        self.assertFalse(extension_loaded('create_mmo'), 'Extension name is in the loaded extensions')
+        self.assertFalse(extension_loaded('foo_bar'), 'Extension name is in the loaded extensions')
+    
+    @unittest.skipIf(cannot_test((3,0), (1,30)), 'function requires opengl 3.0 and GLSL 1.30 support to be tested')    
+    def test_check(self):
+        " Test extension support "
+        self.assertTrue(check_extension('uint_uniforms'))
+        self.assertFalse(check_extension('create_mmo'))
+    
+    @unittest.skipIf(cannot_test((3,0), (1,30)), "function requires opengl 3.0 and GLSL 1.30 support to be tested")    
+    def test_uint_uniforms(self):
+        # Extension might have been loaded before
+        if not extension_loaded('uint_uniforms'):
+            load_extension('uint_uniforms') 
+            
+        shader = from_files_names(vert_path('shader1'), frag_path('ext_shader_uint'))
+        
+        self.assertEqual(8, len(shader.uniforms))
+        self.assertEqual(8, shader.uniforms_count)
+        
+        uniforms_names = ['model', 'view', 'test_uint', 'test_uvec2', 'test_uvec4',
+                          'test_uvec3', 'test_uint_3', 'test_uvec2_2']        
+        for name, info in shader.uniforms:
+            self.assertIn(name, uniforms_names)
+            uniforms_names.remove(name)
+        
+        shader.use()        
+        
+        uni = shader.uniforms
+        
+        uni.test_uint = 2345
+        self.assertEqual(2345, uni.test_uint)
+        
+        uni.test_uvec2 = (2147483648, 78)
+        self.assertEqual((2147483648, 78), uni.test_uvec2 )
+        
+        uni.test_uvec3 = (7000, 8000, 80000)
+        self.assertEqual((7000, 8000, 80000), uni.test_uvec3 )
+        
+        uni.test_uvec4 = (1, 2, 3, 30000)
+        self.assertEqual((1, 2, 3, 30000), uni.test_uvec4)
+        
+        uni.test_uint_3 = (1, 3782463, 3)
+        self.assertEqual((1, 3782463, 3), uni.test_uint_3) 
+        
+        uni.test_uvec2_2 = ((99, 88), (9345, 9456))
+        self.assertEqual(((99, 88), (9345, 9456)), uni.test_uvec2_2) 
+        
+        
+        self.assertEqual(0, len(uniforms_names), 'Some name were not found: {}.'.format(uniforms_names))
 
 if __name__ == '__main__':
     #Create an opengl context for our tests
