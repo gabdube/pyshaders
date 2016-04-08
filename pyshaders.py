@@ -33,7 +33,7 @@ from pyglet.gl import (glCreateShader, glShaderSource, glCompileShader,
   glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUniformMatrix2x3fv,
   glUniformMatrix2x4fv, glUniformMatrix3x2fv, glUniformMatrix3x4fv, 
   glUniformMatrix4x2fv, glUniformMatrix4x3fv, glGetActiveAttrib,
-  glGetAttribLocation)
+  glGetAttribLocation, GLint, GLfloat)
 
 from pyglet.gl import (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPILE_STATUS,
   GL_TRUE, GL_SHADER_TYPE, GL_DELETE_STATUS, GL_INFO_LOG_LENGTH,
@@ -45,12 +45,24 @@ from pyglet.gl import (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPILE_STATUS,
   GL_FLOAT_MAT3x2, GL_FLOAT_MAT3x4, GL_FLOAT_MAT4x2, GL_FLOAT_MAT4x3,
   GL_CURRENT_PROGRAM)
 
-from ctypes import c_char, c_int, c_uint, c_float, cast, POINTER, pointer, byref
+from ctypes import c_char, c_uint, cast, POINTER, pointer, byref
 import weakref, itertools
 from collections import namedtuple
 from collections.abc import Sequence
 
-null_c_int = c_int(0)
+from sys import modules
+
+try:
+    import pyshaders_extensions
+    from importlib import import_module
+    NO_EXTENSIONS = False
+except:
+    NO_EXTENSIONS = True
+
+null_c_int = GLint(0)
+
+#Loaded extensions name are added in here
+LOADED_EXTENSIONS = []
 
 
 #
@@ -65,7 +77,7 @@ def read_opengl_array(_id, length, fn, ctype=c_char):
     global out_buffer_length
     buffer = (ctype*length)()
     buffer_ptr = cast(buffer, POINTER(ctype))
-    fn(_id, length, byref(c_int(0)), buffer_ptr)
+    fn(_id, length, byref(GLint(0)), buffer_ptr)
     return buffer
     
 
@@ -87,30 +99,32 @@ def shader_source(data):
 #    
         
 GETTERS = {
-    c_float: glGetUniformfv,
-    c_int: glGetUniformiv
+    GLfloat: glGetUniformfv,
+    GLint: glGetUniformiv
 }        
         
 UNIFORMS_DATA = { 
 # TypeIndentifier: (c_type, buffer_length, setter, [matrix_size])
-  GL_FLOAT: (c_float, 1, glUniform1fv),
-  GL_FLOAT_VEC2: (c_float, 2, glUniform2fv),
-  GL_FLOAT_VEC3: (c_float, 3, glUniform3fv),
-  GL_FLOAT_VEC4: (c_float, 4, glUniform4fv),
-  GL_INT: (c_int, 1, glUniform1iv),
-  GL_INT_VEC2: (c_int, 2, glUniform2iv),
-  GL_INT_VEC3: (c_int, 3, glUniform3iv),
-  GL_INT_VEC4: (c_int, 4, glUniform4iv),
-  GL_FLOAT_MAT2: (c_float, 4, lambda x,y,z: glUniformMatrix2fv(x,y,False,z),      (2,2)),
-  GL_FLOAT_MAT3: (c_float, 9, lambda x,y,z: glUniformMatrix3fv(x,y,False,z),      (3,3)),
-  GL_FLOAT_MAT4: (c_float, 16, lambda x,y,z: glUniformMatrix4fv(x,y,False,z),     (4,4)),
-  GL_FLOAT_MAT2x3: (c_float, 6, lambda x,y,z: glUniformMatrix2x3fv(x,y,False,z),  (2,3)),
-  GL_FLOAT_MAT2x4: (c_float, 8, lambda x,y,z: glUniformMatrix2x4fv(x,y,False,z),  (2,4)),
-  GL_FLOAT_MAT3x2: (c_float, 6, lambda x,y,z: glUniformMatrix3x2fv(x,y,False,z),  (3,2)),
-  GL_FLOAT_MAT3x4: (c_float, 12, lambda x,y,z: glUniformMatrix3x4fv(x,y,False,z), (3,4)),
-  GL_FLOAT_MAT4x2: (c_float, 8, lambda x,y,z: glUniformMatrix4x2fv(x,y,False,z),  (4,2)),
-  GL_FLOAT_MAT4x3: (c_float, 12, lambda x,y,z: glUniformMatrix4x3fv(x,y,False,z), (4,3)),
+  GL_FLOAT: (GLfloat, 1, glUniform1fv),
+  GL_FLOAT_VEC2: (GLfloat, 2, glUniform2fv),
+  GL_FLOAT_VEC3: (GLfloat, 3, glUniform3fv),
+  GL_FLOAT_VEC4: (GLfloat, 4, glUniform4fv),
+  GL_INT: (GLint, 1, glUniform1iv),
+  GL_INT_VEC2: (GLint, 2, glUniform2iv),
+  GL_INT_VEC3: (GLint, 3, glUniform3iv),
+  GL_INT_VEC4: (GLint, 4, glUniform4iv),
+  GL_FLOAT_MAT2: (GLfloat, 4, lambda x,y,z: glUniformMatrix2fv(x,y,False,z),      (2,2)),
+  GL_FLOAT_MAT3: (GLfloat, 9, lambda x,y,z: glUniformMatrix3fv(x,y,False,z),      (3,3)),
+  GL_FLOAT_MAT4: (GLfloat, 16, lambda x,y,z: glUniformMatrix4fv(x,y,False,z),     (4,4)),
+  GL_FLOAT_MAT2x3: (GLfloat, 6, lambda x,y,z: glUniformMatrix2x3fv(x,y,False,z),  (2,3)),
+  GL_FLOAT_MAT2x4: (GLfloat, 8, lambda x,y,z: glUniformMatrix2x4fv(x,y,False,z),  (2,4)),
+  GL_FLOAT_MAT3x2: (GLfloat, 6, lambda x,y,z: glUniformMatrix3x2fv(x,y,False,z),  (3,2)),
+  GL_FLOAT_MAT3x4: (GLfloat, 12, lambda x,y,z: glUniformMatrix3x4fv(x,y,False,z), (3,4)),
+  GL_FLOAT_MAT4x2: (GLfloat, 8, lambda x,y,z: glUniformMatrix4x2fv(x,y,False,z),  (4,2)),
+  GL_FLOAT_MAT4x3: (GLfloat, 12, lambda x,y,z: glUniformMatrix4x3fv(x,y,False,z), (4,3)),
 } 
+
+UNPACK_ARRAY = [GL_FLOAT, GL_INT]
 
 to_seq = lambda x: x if isinstance(x, Sequence) else [x] 
 
@@ -193,7 +207,7 @@ def create_uniform_setter(loc, type, count, is_array):
             setter(loc, count, data_ptr)
             
     elif is_array ^ is_matrix:
-        unpack = False if type in (GL_FLOAT, GL_INT) else True
+        unpack = False if type in UNPACK_ARRAY else True
         def setter_fn(value):
             flat = value if not unpack else list(itertools.chain.from_iterable(value))
             data = c_buf_type(*flat)
@@ -221,12 +235,15 @@ class ShaderCompilationError(Exception):
     def __str__(self):
         return "Shaders Errors: \n\n"+self.logs
 
+class PyShadersExtensionError(Exception):
+    __slots__ = []
+
 class GLGetObject(object):
     """
         Descriptor that wraps glGet* function
     """
     __slots__ = ['pname']
-    buffer = c_int(0)
+    buffer = GLint(0)
     
     def __init__(self, pname): self.pname = pname
     def __set__(self): raise AttributeError('Attribute is not writable')
@@ -374,8 +391,8 @@ class ShaderAccessor(object):
         name_buf = (c_char*maxlength)()
         name_buf_ptr = cast(name_buf, POINTER(c_char))
         type_buf = GLenum(0)
-        name_buf_length = c_int(0) 
-        buf_size = c_int(0) 
+        name_buf_length = GLint(0) 
+        buf_size = GLint(0) 
         
         self.cache = {}
         for i in range(getattr(prog, count)):
@@ -386,7 +403,7 @@ class ShaderAccessor(object):
             name = bytes(name_buf)[0:name_len].decode('UTF-8')
             size = buf_size.value 
             
-            loc = c_int(locfn(prog.pid, name_buf_ptr))   #Kept in a c_int to quickly send the value when setting  
+            loc = GLint(locfn(prog.pid, name_buf_ptr))   #Kept in a c_int to quickly send the value when setting  
             
             self.cache_item_build(loc, size, name, type)
 
@@ -645,7 +662,7 @@ def current_program():
         Return the currently bound shader program or None if there is None.
         The returned shader do not own the underlying buffer.
     """
-    cprog = c_int(0)
+    cprog = GLint(0)
     glGetIntegerv(GL_CURRENT_PROGRAM, byref(cprog))
     if cprog.value == 0:
         return None
@@ -739,3 +756,55 @@ def from_files(verts, frags):
     frag_srcs = [frag.read() for frag in frags]
     
     return from_string(vert_srcs, frag_srcs)
+        
+def extension_loaded(extension_name):
+    """
+        Return True if the extension is loaded, False otherwise.
+        
+        Arguments:
+            extension_name: Name of the extension to check
+    """
+    return extension_name in LOADED_EXTENSIONS
+        
+def find_extension(extension_name):
+    """
+        Load the extension module. Used internally.
+    """
+    
+    if NO_EXTENSIONS:
+        raise ImportError('Pyshaders extension module cannot be found. Maybe it was not installed?')
+        
+    try:
+        ext = import_module('.'+extension_name, pyshaders_extensions.__package__)
+        return ext
+    except ImportError:
+        raise ImportError('No extension named "{}" found'.format(extension_name))
+    
+def check_extension(extension_name):
+    """
+        Return True if the client can use the extension, False otherwise
+        
+        Arguments:
+            extension_name: Name of the extension to check
+    """
+    ext = find_extension(extension_name)
+    return ext.supported()
+    
+def load_extension(extension_name):
+    """
+        Load the extension. Will raise an ImportError if the extension was already loaded
+        or a PyShadersExtensionError if the extension is not supported by the client.
+        
+        Arguments:
+            extension_name: Name of the extension to check
+    """
+    if extension_name in LOADED_EXTENSIONS:
+        raise ImportError('Extension "{}" is already loaded'.format(extension_name))
+        
+    ext = find_extension(extension_name)
+    if ext.supported() is False:
+        raise PyShadersExtensionError('Extension "{}" is not supported'.format(extension_name))
+
+    
+    ext.load(modules['pyshaders'])
+    LOADED_EXTENSIONS.append(extension_name)
