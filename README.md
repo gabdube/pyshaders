@@ -694,7 +694,7 @@ Could be added to the main module:
 
 Could be added as an extension:
 
-- ~~Support for **double, uint and boolean** uniforms~~ (implemented in 1.1.0)
+- ~~Support for **double, uint ** uniforms~~ (implemented in 1.1.0)
 - Support for multi level array ( GL_ARB_arrays_of_arrays ) 
 - Uniform structures
 - Uniform blocks
