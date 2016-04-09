@@ -149,9 +149,10 @@ print(check_extension('uint_uniforms'))
 
 ### All extensions
 
-| Name          | Requirements             | Pyshaders Version | Description |
-| ------------- | ------------------------ | ----------------- | ----------- |
-| uint_uniforms | GL >= 3.0 / GLSL >= 1.30 | 1.1.0             | Add support for unsigned integers uniforms |
+| Name            | Requirements             | Pyshaders Version | Description |
+| -------------   | ------------------------ | ----------------- | ----------- |
+| uint_uniforms   | GL >= 3.0 / GLSL >= 1.30 | 1.1.0             | Add support for unsigned integers uniforms |
+| double_uniforms | GL >= 3.2 / GLSL >= 1.50 | 1.1.0             | Add support for double uniforms |
 
 
 <a name="guide"></a>
