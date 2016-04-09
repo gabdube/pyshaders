@@ -637,27 +637,10 @@ class TestShaders(unittest.TestCase):
         Because from_string is used internally by from_files and from_file_names,
         I think it is safe to say the function is well tested
         """
-
-EXTENSIONS_WARNINGS = []
-
-def cannot_test(gl_version, glsl_version):
-    glsl = bytearray()
-    for i in glGetString(GL_SHADING_LANGUAGE_VERSION):
-        if i != 0:
-            glsl.append(i)
-        else:
-            break
-    
-    glsl = [ int(v) for v in glsl.decode('utf8').split('.')]
-    
-    gl_ok = gl_info.have_version(*gl_version)
-    glsl_ok = (glsl[0] > glsl_version[0]) or (glsl[0] == glsl_version[0] and glsl[1] >= glsl_version[1])
-    
-    return not gl_ok or not glsl_ok
-
+        
 class TestExtensions(unittest.TestCase):
     
-    @unittest.skipIf(cannot_test((3,0), (1,30)), "function requires opengl 3.0 and GLSL 1.30 support to be tested")    
+    @unittest.skipUnless(check_extension('uint_uniforms'), "extension uint_uniforms is not supported")    
     def test_load(self):
         " Test extension loading "
         
@@ -683,13 +666,13 @@ class TestExtensions(unittest.TestCase):
         self.assertFalse(extension_loaded('create_mmo'), 'Extension name is in the loaded extensions')
         self.assertFalse(extension_loaded('foo_bar'), 'Extension name is in the loaded extensions')
     
-    @unittest.skipIf(cannot_test((3,0), (1,30)), 'function requires opengl 3.0 and GLSL 1.30 support to be tested')    
+    @unittest.skipUnless(check_extension('uint_uniforms'), 'extension uint_uniforms is not supported')    
     def test_check(self):
         " Test extension support "
         self.assertTrue(check_extension('uint_uniforms'))
         self.assertFalse(check_extension('create_mmo'))
     
-    @unittest.skipIf(cannot_test((3,0), (1,30)), "function requires opengl 3.0 and GLSL 1.30 support to be tested")    
+    @unittest.skipUnless(check_extension('uint_uniforms'), "extension uint_uniforms is not supported")    
     def test_uint_uniforms(self):
         # Extension might have been loaded before
         if not extension_loaded('uint_uniforms'):
@@ -731,6 +714,100 @@ class TestExtensions(unittest.TestCase):
         
         self.assertEqual(0, len(uniforms_names), 'Some name were not found: {}.'.format(uniforms_names))
 
+    @unittest.skipUnless(check_extension('double_uniforms'), "extension double_uniforms is not supported")    
+    def test_double_uniforms(self):
+        
+        load_extension('double_uniforms') 
+        
+        shader = from_files_names(vert_path('shader1'), frag_path('ext_shader_double'))
+        
+        self.assertEqual(18, len(shader.uniforms))
+        self.assertEqual(18, shader.uniforms_count)
+        
+        uniforms_names = ['model', 'view', 'test_double', 'test_dvec2', 'test_dvec4',
+                          'test_dvec3', 'test_double_3', 'test_dvec2_2', 'test_dmat3',
+                          'test_dmat2', 'test_dmat4', 'test_dmat2_3', 'test_dmat2_4',
+                          'test_dmat3_2', 'test_dmat3_4', 'test_dmat4_2', 'test_dmat4_3',
+                          'test_dmat2_2']        
+        for name, info in shader.uniforms:
+            self.assertIn(name, uniforms_names)
+            uniforms_names.remove(name)
+        
+        shader.use()        
+        
+        uni = shader.uniforms
+        
+        uni.test_double = 6.0
+        self.assertEqual(6.0, uni.test_double)
+        
+        uni.test_dvec2 = (3.0, 4720.0)
+        self.assertEqual((3.0, 4720.0), uni.test_dvec2 )
+        
+        uni.test_dvec3 = (7000.0, 8000.0, 80000.0)
+        self.assertEqual((7000.0, 8000.0, 80000.0), uni.test_dvec3 )
+        
+        uni.test_dvec4 = (1.0, 2.0, 3.0, 30000.0)
+        self.assertEqual((1.0, 2.0, 3.0, 30000.0), uni.test_dvec4)
+        
+        uni.test_double_3 = (1.0, 3782463.0, 3.0)
+        self.assertEqual((1.0, 3782463.0, 3.0), uni.test_double_3) 
+        
+        uni.test_dvec2_2 = ((99.0, 88.0), (9345.0, 9456.0))
+        self.assertEqual(((99.0, 88.0), (9345.0, 9456.0)), uni.test_dvec2_2) 
+        
+        uni.test_dmat2 = ((1.0, 2.0), (3.0, 4.0))
+        self.assertEqual(((1.0, 2.0), (3.0, 4.0)), uni.test_dmat2)
+        
+        uni.test_dmat3 = ((1.0, 2.0, 9.0), (3.0, 4.0, 10.0), (22.0, 33.0, 44.0))
+        self.assertEqual(((1.0, 2.0, 9.0), (3.0, 4.0, 10.0), (22.0, 33.0, 44.0)), uni.test_dmat3)
+        
+        uni.test_dmat4 = ((1.0, 2.0, 19.0, 80.0),
+                          (3.0, 4.0, 11.0, 41.0),
+                          (16.0, 3.0, 11.0, 89.0),
+                          (83.0, 233.0, 213.0, 982.0))
+        self.assertEqual(((1.0, 2.0, 19.0, 80.0),
+                          (3.0, 4.0, 11.0, 41.0),
+                          (16.0, 3.0, 11.0, 89.0),
+                          (83.0, 233.0, 213.0, 982.0)), uni.test_dmat4)
+        
+        uni.test_dmat2_3 = ((8.0, 77.0, 45.0), (9.0, 244.0, 24.0))
+        self.assertEqual(((8.0, 77.0, 45.0), (9.0, 244.0, 24.0)), uni.test_dmat2_3)
+    
+        uni.test_dmat2_4 = ((8.0, 77.0, 45.0, 82.0),
+                            (9.0, 244.0, 24.0, 374.0))
+        self.assertEqual(((8.0, 77.0, 45.0, 82.0),
+                          (9.0, 244.0, 24.0, 374.0)), uni.test_dmat2_4)    
+    
+        uni.test_dmat3_2 = ((8.0, 77.0), (45.0, 82.0), (9.0, 244.0))
+        self.assertEqual(((8.0, 77.0), (45.0, 82.0), (9.0, 244.0)), uni.test_dmat3_2)    
+        
+        uni.test_dmat3_4 = ((8.0, 77.0, 45.0, 82.0),
+                            (9.0, 244.0, 24.0, 374.0),
+                            (98.0, 2448.0, 248.0, 3748.0),)
+        self.assertEqual(((8.0, 77.0, 45.0, 82.0),
+                          (9.0, 244.0, 24.0, 374.0),
+                          (98.0, 2448.0, 248.0, 3748.0),), uni.test_dmat3_4)    
+        
+        uni.test_dmat4_2 = ((8.0, 77.0), (45.0, 82.0),
+                            (9.0, 244.0), (91.0, 1244.0))
+        self.assertEqual(((8.0, 77.0), (45.0, 82.0),
+                          (9.0, 244.0), (91.0, 1244.0)), uni.test_dmat4_2)    
+        
+        uni.test_dmat4_3 = ((8.0, 77.0, 45.0),
+                            (9.0, 244.0, 24.0),
+                            (98.0, 2448.0, 248.0),
+                            (99.0, 34.0, 1.0))
+        self.assertEqual(((8.0, 77.0, 45.0),
+                          (9.0, 244.0, 24.0),
+                          (98.0, 2448.0, 248.0),
+                          (99.0, 34.0, 1.0)), uni.test_dmat4_3)   
+        
+        uni.test_dmat2_2 = (((1.0, 2.0), (3.0, 4.0)),
+                            ((10.0, 20.0), (30.0, 40.0)))
+        
+        self.assertEqual((((1.0, 2.0), (3.0, 4.0)),
+                          ((10.0, 20.0), (30.0, 40.0))), uni.test_dmat2_2)  
+    
 if __name__ == '__main__':
     #Create an opengl context for our tests
     window = pyglet.window.Window(visible=False)
