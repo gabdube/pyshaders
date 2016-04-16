@@ -298,9 +298,10 @@ shader.uniforms.blushing_wombat = (5.0, 3.0, 2.0, 7.0, 1.0, 1.5)
 
 #### **Attributes**
 
-Shader attributes do not have a get/set syntax like the uniforms (for now), but the properties of the attributes can be accessed like with the uniforms: using the dictionary syntax. The attributes information is queried using **[glGetActiveAttrib](http://docs.gl/gl2/glGetActiveAttrib)**
+Shaders attributes can be queried just like the uniforms. Attributes can be used
+to get information on attributes arrays.
 
-Shader attribute arrays can be easily enabled and then disabled using *enable* and *disable*.  
+Shader attribute arrays can be easily enabled and then disabled using the methods *enable* and *disable*.  
 The method "point_to" can be used to wrap glVertexAttribPointer.
 
 See the api section for more information you can query on attributes.
@@ -310,8 +311,6 @@ Example:
 # In the shader
 # layout(location = 0)in vec3 vertex;
 attribute = shader.attributes.vertex
-print(attribute)
-# Uniform(loc=c_long(0), type=35665, name='vertex')
 
 attribute.enable()
 attribute.point_to(8, GL_DOUBLE, 3, True, 4)
@@ -707,11 +706,11 @@ print(program)
 >- *ptr_type*:  Type of the data pointed (GL_VERTEX_ATTRIB_ARRAY_TYPE)
 
 ♣
->**ShaderAttribute.enable(self)**
+>**ShaderAttribute.enable(self)**  
 > Enable the shader attribute
 
 ♣
->**ShaderAttribute.disable(self)**
+>**ShaderAttribute.disable(self)**  
 > Disable the shader attribute
 
 ♣
