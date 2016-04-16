@@ -7,7 +7,7 @@ from ctypes import c_char_p, cast
 import pyglet
 from pyglet.gl import (glIsShader, GL_FALSE, GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,
   glCreateShader, GL_TRUE, glDeleteShader, glIsProgram, glCreateProgram,
-  glDeleteProgram, gl_info, glGetString, GL_SHADING_LANGUAGE_VERSION)
+  glDeleteProgram, GL_DOUBLE, GL_FLOAT)
 
 import pyshaders
 from pyshaders import (ShaderObject, ShaderCompilationError, shader_source,
@@ -337,11 +337,10 @@ class TestAccessors(unittest.TestCase):
         view = shader.uniforms["view"]
         self.assertEqual('view', view.name)
         self.assertEqual(1, view.size)
-        self.assertEqual(GL_FLOAT_MAT3, view.type)
-        
+        self.assertEqual(GL_FLOAT_MAT3, view.type)     
+            
         vert = shader.attributes["vert"]
         self.assertEqual('vert', vert.name)
-        self.assertEqual(1, vert.size)
         self.assertEqual(GL_FLOAT_VEC3, vert.type)
         
         self.assertIn(view, shader.uniforms)
@@ -359,6 +358,36 @@ class TestAccessors(unittest.TestCase):
             
         self.assertEqual('Key foo not found', str(cm1.exception), 'Exception do not matches')
         self.assertEqual('Key foo not found', str(cm2.exception), 'Exception do not matches')
+        
+    def test_attributes_methods(self):
+        " Test methods on a shader attributes "    
+        
+        shader = from_files_names(vert_path('shader1'), frag_path('shader1'))
+        attr = shader.attributes
+        
+        shader.use()        
+        
+        self.assertEqual(GL_FALSE, attr.vert.enabled)
+        self.assertEqual(0, attr.vert.buffer)
+        self.assertEqual(0, attr.vert.stride)
+        self.assertEqual(GL_FALSE, attr.vert.normalized)
+        self.assertEqual(4, attr.vert.size)
+        self.assertEqual(GL_FLOAT, attr.vert.ptr_type)
+        
+        attr.vert.enable()
+        
+        self.assertEqual(GL_TRUE, attr.vert.enabled)
+        
+        attr.vert.point_to(200, GL_DOUBLE, 3, True, 4)
+        self.assertEqual(4, attr.vert.stride)
+        self.assertEqual(GL_TRUE, attr.vert.normalized)
+        self.assertEqual(3, attr.vert.size)
+        self.assertEqual(GL_DOUBLE, attr.vert.ptr_type)
+        
+        attr.vert.disable()
+        
+        self.assertEqual(GL_FALSE, attr.vert.enabled)
+        
         
 class TestUniforms(unittest.TestCase):
 

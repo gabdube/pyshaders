@@ -20,11 +20,12 @@ else:
    
 
 setup(name='pyshaders',
-      version='1.1.0',
+      version='1.2.0',
       description='OpenGL shader wrapper for python',
       author='Gabriel Dubé',
       author_email='gdube@azanka.ca',
       license='MIT',
-      url= 'https://github.com/gabdube/pyshaders',
+      url='https://github.com/gabdube/pyshaders',
+      download_url='https://github.com/gabdube/pyshaders',
       py_modules=['pyshaders']+extensions,
      )
