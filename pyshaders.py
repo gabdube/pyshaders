@@ -29,11 +29,12 @@ from pyglet.gl import (glCreateShader, glShaderSource, glCompileShader,
   glGetAttachedShaders, glGetProgramiv, glLinkProgram, glGetProgramInfoLog,
   glUseProgram, glGetActiveUniform, GLenum, glGetUniformLocation, glUniform1fv,
   glGetUniformfv, glGetUniformiv, glUniform2fv, glUniform3fv, glUniform4fv,
-  glUniform2iv, glUniform3iv, glUniform4iv, glUniform1iv, glGetIntegerv,
+  glUniform2iv, glUniform3iv, glUniform4iv, glUniform1iv, glGetIntegerv, GLuint,
   glUniformMatrix2fv, glUniformMatrix3fv, glUniformMatrix4fv, glUniformMatrix2x3fv,
   glUniformMatrix2x4fv, glUniformMatrix3x2fv, glUniformMatrix3x4fv, 
-  glUniformMatrix4x2fv, glUniformMatrix4x3fv, glGetActiveAttrib,
-  glGetAttribLocation, GLint, GLfloat)
+  glUniformMatrix4x2fv, glUniformMatrix4x3fv, glGetActiveAttrib, 
+  glGetAttribLocation, GLint, GLfloat, glEnableVertexAttribArray, 
+  glDisableVertexAttribArray, glGetVertexAttribiv, glVertexAttribPointer)
 
 from pyglet.gl import (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPILE_STATUS,
   GL_TRUE, GL_SHADER_TYPE, GL_DELETE_STATUS, GL_INFO_LOG_LENGTH,
@@ -43,7 +44,9 @@ from pyglet.gl import (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, GL_COMPILE_STATUS,
   GL_FLOAT_VEC4, GL_INT, GL_INT_VEC2, GL_INT_VEC3, GL_INT_VEC4,
   GL_FLOAT_MAT2, GL_FLOAT_MAT3, GL_FLOAT_MAT4, GL_FLOAT_MAT2x3, GL_FLOAT_MAT2x4,
   GL_FLOAT_MAT3x2, GL_FLOAT_MAT3x4, GL_FLOAT_MAT4x2, GL_FLOAT_MAT4x3,
-  GL_CURRENT_PROGRAM)
+  GL_CURRENT_PROGRAM, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, GL_VERTEX_ATTRIB_ARRAY_SIZE,
+  GL_VERTEX_ATTRIB_ARRAY_ENABLED, GL_VERTEX_ATTRIB_ARRAY_STRIDE, 
+  GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, GL_VERTEX_ATTRIB_ARRAY_TYPE)
 
 from ctypes import c_char, c_uint, cast, POINTER, pointer, byref
 import weakref, itertools
@@ -263,6 +266,13 @@ class GetProgramObject(GLGetObject):
         glGetProgramiv(instance.pid, self.pname, byref(self.buffer))
         return self.buffer.value
         
+class GetAttributeObject(GLGetObject):
+    __slots__ = []
+    
+    def __get__(self, instance, cls):
+        glGetVertexAttribiv(instance.loc, self.pname, byref(self.buffer))
+        return self.buffer.value
+        
 class ShaderObject(object):
     """
         Represent a shader object. This wrapper can be used to get information
@@ -437,25 +447,68 @@ class ShaderAccessor(object):
     def __repr__(self):
         return str(list(self.cache.keys()))
 
+
+class ShaderAttribute(object):
+    """
+        Represent a shader attribute.
+        
+        Slots:
+            loc: Index of the attribute
+            type: Type of the attribute
+            name: Name of the attribute
+    """
+    __slots__ = ['loc', 'type', 'name']
+    
+    buffer = GetAttributeObject(GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING)
+    enabled = GetAttributeObject(GL_VERTEX_ATTRIB_ARRAY_ENABLED)
+    stride = GetAttributeObject(GL_VERTEX_ATTRIB_ARRAY_STRIDE)
+    normalized = GetAttributeObject(GL_VERTEX_ATTRIB_ARRAY_NORMALIZED)
+    size = GetAttributeObject(GL_VERTEX_ATTRIB_ARRAY_SIZE)
+    ptr_type = GetAttributeObject(GL_VERTEX_ATTRIB_ARRAY_TYPE)
+    
+    def enable(self):
+        " Enable the shader attribute "
+        glEnableVertexAttribArray(self.loc)
+    
+    def disable(self):
+        " Disable the shader attribute "
+        glDisableVertexAttribArray(self.loc)
+        
+    def point_to(self, offset, type, size, normalized=False, stride=0):
+        """
+            Call glVertexAttribPointer with the supplied parameters. The attributes
+            "type" and "size" are handled by the library. Attrbute shader must be in use.
+            
+            Arguments:
+                offset:     Offset of the data in bytes
+                type:       Type of the pointed data. Must be a GL_* constant such as GL_FLOAT.
+                size:       Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, or 4.
+                normalized: Specifies whether fixed-point data values should be normalized 
+                            (True) or converted directly as fixed-point values (GL_FALSE) 
+                stride:     Specifies the byte offset between consecutive generic vertex attributes.
+        """
+        glVertexAttribPointer(self.loc, size, type, normalized, stride, offset)
+        
+
 class ShaderAttributeAccessor(ShaderAccessor):
     """
         Allow pythonic access to a shader attributes.
         This object is created with a shaderprogram and should not be instanced manually.
     """
     
-    __slots__ = []
-    
-    attribinfo = namedtuple('Attribute', ['loc', 'type', 'size', 'name'])
-    
     def __init__(self, program):
         super().__init__(program)
-        self.cache_type = ShaderAttributeAccessor.attribinfo
+        self.cache_type = ShaderAttribute
 
     def cache_item_build(self, loc, size, name, type):
         """
             Add an item to the cache. This is called by reload.
         """
-        attribinfo = self.attribinfo(loc=loc, type=type, name=name, size=size)
+        attribinfo = ShaderAttribute()
+        attribinfo.loc = GLuint(loc.value)
+        attribinfo.type = type
+        attribinfo.name = name
+        
         self.cache[name] = attribinfo   
         
     def reload(self):
@@ -466,6 +519,9 @@ class ShaderAttributeAccessor(ShaderAccessor):
         """
         super().reload('max_attribute_length', 'attributes_count',
                        glGetActiveAttrib, glGetAttribLocation)  
+        
+    def __getattr__(self, name):
+        return self[name]
 
 class ShaderUniformAccessor(ShaderAccessor):
     """

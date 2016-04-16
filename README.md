@@ -300,13 +300,23 @@ shader.uniforms.blushing_wombat = (5.0, 3.0, 2.0, 7.0, 1.0, 1.5)
 
 Shader attributes do not have a get/set syntax like the uniforms (for now), but the properties of the attributes can be accessed like with the uniforms: using the dictionary syntax. The attributes information is queried using **[glGetActiveAttrib](http://docs.gl/gl2/glGetActiveAttrib)**
 
+Shader attribute arrays can be easily enabled and then disabled using *enable* and *disable*.  
+The method "point_to" can be used to wrap glVertexAttribPointer.
+
+See the api section for more information you can query on attributes.
+
 Example:
 ```python
 # In the shader
 # layout(location = 0)in vec3 vertex;
-attribute = shader.attributes["vertex"]
+attribute = shader.attributes.vertex
 print(attribute)
-# Uniform(loc=c_long(0), type=35665, size=1, name='vertex')
+# Uniform(loc=c_long(0), type=35665, name='vertex')
+
+attribute.enable()
+attribute.point_to(8, GL_DOUBLE, 3, True, 4)
+# Draw something
+attribute.disable()
 ```
 
 
@@ -679,6 +689,44 @@ print(program)
 > Return True if an uniform is within the program, Item can be the name of the uniform as a string OR
 > a uniform object. 
 
+♣
+>**ShaderAttribute(object)**  
+>Represent a shader attribute.
+>
+>**Slots**:  
+>- loc: Index of the attribute
+>- type: Type of the attribute
+>- name: Name of the attribute
+>
+>**Readonly Properties**:  
+>- *buffer*: Buffer binded to the attribute (GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING)
+>- *enabled*:  If the attribute is enabled (GL_VERTEX_ATTRIB_ARRAY_ENABLED)
+>- *stride*:  Specifies the byte offset between consecutive generic vertex attributes. (GL_VERTEX_ATTRIB_ARRAY_STRIDE)
+>- *normalized*:  pecifies whether fixed-point data values should be normalized  (GL_VERTEX_ATTRIB_ARRAY_NORMALIZED)
+>- *size*:  Type of the pointed data (GL_VERTEX_ATTRIB_ARRAY_SIZE)
+>- *ptr_type*:  Type of the data pointed (GL_VERTEX_ATTRIB_ARRAY_TYPE)
+
+♣
+>**ShaderAttribute.enable(self)**
+> Enable the shader attribute
+
+♣
+>**ShaderAttribute.disable(self)**
+> Disable the shader attribute
+
+♣
+>**ShaderAttribute.point_to(self, offset, type, size, normalized=False, stride=0)**
+>
+> Call glVertexAttribPointer with the supplied parameters. The attributes
+>  "type" and "size" are handled by the library. Attrbute shader must be in use.
+>            
+>  offset:     Offset of the data in bytes
+>  type:       Type of the pointed data. Must be a GL_* constant such as GL_FLOAT.
+>  size:       Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, or 4.
+>  normalized: Specifies whether fixed-point data values should be normalized 
+>              (True) or converted directly as fixed-point values (GL_FALSE) 
+>  stride:     Specifies the byte offset between consecutive generic vertex attributes.
+
 
 <a name="future"></a>
 
@@ -690,8 +738,7 @@ I dont think that I will add new features to the main module (pyshaders.py), at 
 Could be added to the main module:
 
 - Support for  other bindings library (ex: PyOpenGL)
-- Get/Set support for attributes
-- More get for attributes
+- ~~More get for attributes~~ (implemented in 1.2.0)
 
 Could be added as an extension:
 

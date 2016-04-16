@@ -1,6 +1,18 @@
 # Changelog
 
 - [1.1.0](#oneonezero)
+- [1.2.0](#oneonezero)
+
+<a name="onetwozero"/>
+### Pyshaders 1.2.0
+
+- ##### Main module
+    - More get for attributes
+    - Enable/disable vertex attrib arrays
+    - Low level wrapper "attribute.point_to" over glVertexAttribPointer
+
+- ##### Extensions
+    - Nothing new
 
 <a name="oneonezero"/>
 ### Pyshaders 1.1.0
