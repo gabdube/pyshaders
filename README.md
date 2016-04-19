@@ -6,6 +6,8 @@ Pyshaders aims to completely wraps the opengl2.1 shader api in a python module. 
 
 PyShaders was programmed using very high standards. This means that Pyshaders is fully tested and it comes with an exhaustive documentation (this file). The code is DRYer than California in 2015 and it makes uses of many advanced python functionalities to make the code smaller, easier to use and easier to read.
 
+If this project interest you, you might also like [pyglbuffers](https://github.com/gabdube/pyglbuffers)
+
 ----------
 
 - [PyShaders](#)
