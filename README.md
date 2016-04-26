@@ -151,10 +151,11 @@ print(check_extension('uint_uniforms'))
 
 ### All extensions
 
-| Name            | Requirements             | Pyshaders Version | Description |
-| -------------   | ------------------------ | ----------------- | ----------- |
-| uint_uniforms   | GL >= 3.0 / GLSL >= 1.30 | 1.1.0             | Add support for unsigned integers uniforms |
-| double_uniforms | GL >= 3.2 / GLSL >= 1.50 | 1.1.0             | Add support for double uniforms |
+| Name                 | Requirements             | Pyshaders Version | Description |
+| -------------------- | ------------------------ | ----------------- | ----------- |
+| uint_uniforms        | GL >= 3.0 / GLSL >= 1.30 | 1.1.0             | Add support for unsigned integers uniforms |
+| double_uniforms      | GL >= 3.2 / GLSL >= 1.50 | 1.1.0             | Add support for double uniforms |
+| pyglbuffers_bindings | pyglbuffers >= 1.2.0     | 1.3.0             | Add utility functions to interact with pyglbuffers. |
 
 
 <a name="guide"></a>
@@ -305,6 +306,9 @@ to get information on attributes arrays.
 
 Shader attribute arrays can be easily enabled and then disabled using the methods *enable* and *disable*.  
 The method "point_to" can be used to wrap glVertexAttribPointer.
+
+In order to quickly enable/disable the shader attributes, shader.enable_all_attributes / shader.disable_all_attributes
+can be used.
 
 See the api section for more information you can query on attributes.
 
@@ -616,6 +620,15 @@ print(program)
 ♣
 > **ShaderProgram.use(self)**  
 > Use the shader program 
+
+♣
+> **ShaderProgram.enable_all_attributes(self)**  
+> Call enable() on the shader attributes
+
+♣
+> **ShaderProgram.disable_all_attributes(self)**  
+> Call disable() on the shader attributes 
+
 
 ♣
 > **ShaderProgram.clear()**  

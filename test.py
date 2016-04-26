@@ -2,12 +2,12 @@
 
 import unittest, gc
 from io import SEEK_END
-from ctypes import c_char_p, cast
+from ctypes import c_char_p, cast, sizeof
 
 import pyglet
 from pyglet.gl import (glIsShader, GL_FALSE, GL_VERTEX_SHADER, GL_FRAGMENT_SHADER,
   glCreateShader, GL_TRUE, glDeleteShader, glIsProgram, glCreateProgram,
-  glDeleteProgram, GL_DOUBLE, GL_FLOAT)
+  glDeleteProgram, GL_DOUBLE, GL_FLOAT, GL_INT)
 
 import pyshaders
 from pyshaders import (ShaderObject, ShaderCompilationError, shader_source,
@@ -836,6 +836,64 @@ class TestExtensions(unittest.TestCase):
         
         self.assertEqual((((1.0, 2.0), (3.0, 4.0)),
                           ((10.0, 20.0), (30.0, 40.0))), uni.test_dmat2_2)  
+        
+    @unittest.skipUnless(check_extension('pyglbuffers_bindings'), "extension pyglbuffers_bindings is not supported")    
+    def test_glbuffers(self):
+        from pyglbuffers import Buffer
+        
+        load_extension('pyglbuffers_bindings')
+
+        shader = from_files_names(vert_path('ext_shader_glbuffers'), frag_path('ext_shader_glbuffers'))
+        buffer = Buffer.array('(4f)[color]')
+        buffer.reserve(10)
+        
+        shader.use()
+        shader.enable_all_attributes()
+        shader.map_attributes(buffer)
+        
+        attr = shader.attributes
+        self.assertEqual(sizeof(buffer.format.struct), attr.color.stride)
+        self.assertEqual(False, attr.color.normalized)
+        self.assertEqual(4, attr.color.size)
+        self.assertEqual(GL_FLOAT, attr.color.ptr_type)
+        
+        self.assertEqual(0, attr.position.buffer)
+        self.assertEqual(0, attr.position.stride)
+        self.assertEqual(GL_FALSE, attr.position.normalized)
+        self.assertEqual(4, attr.position.size)
+        self.assertEqual(GL_FLOAT, attr.position.ptr_type)
+        
+        self.assertEqual(0, attr.secret_value.buffer)
+        self.assertEqual(0, attr.secret_value.stride)
+        self.assertEqual(GL_FALSE, attr.secret_value.normalized)
+        self.assertEqual(4, attr.secret_value.size)
+        self.assertEqual(GL_FLOAT, attr.secret_value.ptr_type)
+
+        shader = from_files_names(vert_path('ext_shader_glbuffers'), frag_path('ext_shader_glbuffers'))
+        
+        buffer = Buffer.array('(3f)[position](4f)[color](1i)[secret_value]')
+        buffer.reserve(10)
+        
+        shader.use()
+        shader.enable_all_attributes()
+        shader.map_attributes(buffer)
+        
+        attr = shader.attributes
+        self.assertEqual(sizeof(buffer.format.struct), attr.position.stride)
+        self.assertEqual(False, attr.position.normalized)
+        self.assertEqual(3, attr.position.size)
+        self.assertEqual(GL_FLOAT, attr.position.ptr_type)
+        
+        self.assertEqual(sizeof(buffer.format.struct), attr.color.stride)
+        self.assertEqual(False, attr.color.normalized)
+        self.assertEqual(4, attr.color.size)
+        self.assertEqual(GL_FLOAT, attr.color.ptr_type)
+        
+        self.assertEqual(sizeof(buffer.format.struct), attr.secret_value.stride)
+        self.assertEqual(False, attr.secret_value.normalized)
+        self.assertEqual(1, attr.secret_value.size)
+        self.assertEqual(GL_INT, attr.secret_value.ptr_type)
+        
     
 if __name__ == '__main__':
     #Create an opengl context for our tests
