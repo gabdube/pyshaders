@@ -69,7 +69,7 @@ if NO_EXTENSIONS:
     except SystemError:
         NO_EXTENSIONS = True
 
-null_c_int = GLint(0)
+null_c_int = None
 
 #Loaded extensions name are added in here
 LOADED_EXTENSIONS = []
