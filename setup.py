@@ -20,7 +20,7 @@ else:
    
 
 setup(name='pyshaders',
-      version='1.4.0',
+      version='1.4.1',
       description='OpenGL shader wrapper for python',
       author='Gabriel Dubé',
       author_email='gdube@azanka.ca',
