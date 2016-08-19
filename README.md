@@ -239,6 +239,16 @@ print(shader.uniforms.my_uniform)
 No need to declare the *type* or the *name* of the uniforms, pyshaders already knows it! The only "limitation" is that the value are statically typed. For example, assigning an int to a uniform float will raise a **TypeError**.
 Also, assigning more values than an array can contains will raise an **IndexError** 
 
+**Transposing matrices**  
+By default matrices uniforms are transposed when set. If this behaviour is not desired, the method `transpose_matrices(bool)` can be used to
+change the transposition
+
+```python
+pyshaders.transpose_matrices(False)
+uni.test_mat2 = ((5.0, 8.0), (2.0, 4.0))
+assert ((5.0, 2.0), (8.0, 4.0)) == uni.test_mat2
+```
+
 **Accessing uniforms properties**
 The properties pyshader uses in order to seamlessly get/set uniforms can queried just as easily. The fields are returned by **[glGetActiveUniform](http://docs.gl/gl2/glGetActiveUniform)**.
 
@@ -251,8 +261,7 @@ print(uniform)
 ```
 **Special setting behaviour**
 
-- Setting incomplete values
-
+**Setting incomplete values**  
 Due to ctypes initializing buffers with zeros, setting incomplete values is permitted. The ignored values will be zeroed. Example:
 
 ```python
@@ -275,8 +284,7 @@ shader.uniforms.unicorn_swag = (1.0, 2.0, 3.0, 4.0, 5.0)
 
 By passing an empty tuple, you can quickly clear any array!
 
-- Setting multi level array
-
+**Setting multi level array**  
 When setting the value of multi-level arrays (ex: vec4[]), pyshaders flatten the values so the layout does not matter. The "depth" of the array **still** matters. Example:
 
 ```python

@@ -15,8 +15,8 @@ from pyshaders import (ShaderObject, ShaderCompilationError, shader_source,
   GL_FLOAT_VEC3, load_extension, check_extension, PyShadersExtensionError,
   extension_loaded)
 
-vert_path = lambda fname: 'fixtures\\{}.glsl.vert'.format(fname)
-frag_path = lambda fname: 'fixtures\\{}.glsl.frag'.format(fname)
+vert_path = lambda fname: 'fixtures/{}.glsl.vert'.format(fname)
+frag_path = lambda fname: 'fixtures/{}.glsl.frag'.format(fname)
 
 def eof(f):
     pos = f.tell()
@@ -409,6 +409,15 @@ class TestUniforms(unittest.TestCase):
         
         self.assertEqual(0, len(uniforms_names), 'Some name were not found: {}.'.format(uniforms_names))
         
+    def test_set_uniform_matrices_transpose(self):
+        shader = from_files_names(vert_path('shader1'), frag_path('shader1'))
+        uni = shader.uniforms
+        shader.use()
+        
+        pyshaders.transpose_matrices(False)
+        uni.test_mat2 = ((5.0, 8.0), (2.0, 4.0))
+        self.assertEqual(((5.0, 2.0), (8.0, 4.0)), uni.test_mat2)
+
     def test_get_set_uniforms_single(self):
         " Test get set uniforms as single value "
         round_tuple = lambda x: tuple([round(y, 2) for y in x])

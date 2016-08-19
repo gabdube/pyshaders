@@ -2,7 +2,23 @@
 
 - [1.1.0](#oneonezero)
 - [1.2.0](#onetwozero)
-- [1.2.0](#onethreezero)
+- [1.3.0](#onethreezero)
+- [1.4.0](#onefourzero)
+- [1.4.1](#onefourone)
+
+<a name="onefourone"/>
+### Pyshaders 1.4.1
+
+- ##### Main module  
+    - Added the option to set the matrix transposition when setting uniforms using `pyshaders.transpose_matrices(bool)`
+    - Fixed fixtures path on unix
+    - Some formatting fix in the readme
+
+<a name="onefourzero"/>
+### Pyshaders 1.4.0
+
+- ##### Main module  
+    - Fixed a critical bug when compiling shaders
 
 <a name="onetwozero"/>
 ### Pyshaders 1.3.0
