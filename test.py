@@ -290,7 +290,48 @@ class TestShaderPrograms(unittest.TestCase):
         prog.use()
         self.assertEqual(current_program(), prog, 'Program is not in use')
         ShaderProgram.clear()
-        self.assertIsNone(current_program(), 'Current program is not None')        
+        self.assertIsNone(current_program(), 'Current program is not None')
+        
+    def test_using(self):
+        " Test shader with-block "
+        prog = ShaderProgram.new_program()
+        prog.attach(*self.get_objects())
+        prog.link()
+        self.assertIsNone(current_program(), 'Current program is not None')
+        with prog.using():
+            self.assertEqual(current_program(), prog, 'Program is not in use')
+        self.assertIsNone(current_program(), 'Current program is not None')
+        
+    def test_using_nested(self):
+        " Test nested shader with-block "
+        prog = ShaderProgram.new_program()
+        prog.attach(*self.get_objects())
+        prog.link()
+        self.assertIsNone(current_program(), 'Current program is not None')
+        with prog.using():
+            self.assertEqual(current_program(), prog, 'Program is not in use')
+            with prog.using():
+                self.assertEqual(current_program(), prog, 'Program is not in use')
+            self.assertEqual(current_program(), prog, 'Program is not in use')
+        self.assertIsNone(current_program(), 'Current program is not None')
+        
+    def test_using_multiple(self):
+        " Test multiple shaders with-block "
+        prog1 = ShaderProgram.new_program()
+        prog1.attach(*self.get_objects())
+        prog1.link()
+        
+        prog2 = ShaderProgram.new_program()
+        prog2.attach(*self.get_objects('shader2'))
+        prog2.link()
+        
+        self.assertIsNone(current_program(), 'Current program is not None')
+        with prog1.using():
+            self.assertEqual(current_program(), prog1, 'Program 1 is not in use')
+            with prog2.using():
+                self.assertEqual(current_program(), prog2, 'Program 2 is not in use')
+            self.assertEqual(current_program(), prog1, 'Program 1 is not in use')
+        self.assertIsNone(current_program(), 'Current program is not None')
         
 class TestAccessors(unittest.TestCase):
 
