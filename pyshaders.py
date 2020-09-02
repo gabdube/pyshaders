@@ -735,11 +735,16 @@ class ShaderProgram(object):
     @contextmanager
     def using(self):
         " Return a context manager to use the shader program in the with-block "
+        previous = current_program()
+        if previous is not None:
+            previous.clear()
         self.use()
         try:
             yield
         finally:
             self.clear()
+            if previous is not None:
+                previous.use()
     
     def __bool__(self):
         return self.valid()
