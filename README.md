@@ -79,6 +79,7 @@ License
 >MIT License
 
 >Copyright (c) 2016 Gabriel Dubé
+>Copyright (c) 2020 George Zhang
 
 >Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -199,10 +200,16 @@ print(shader, shader2, sep=", ")
 ```
 
 
-To use or remove a shaderprogram, simply call
+To use or remove a shaderprogram, simply do
 ```python
 shader.use()
+# do stuff
 ShaderProgram.clear() # or shader.clear()
+
+# or
+
+with shader.using():
+    # do stuff
 ```
 
 **What happens during the compilation?**

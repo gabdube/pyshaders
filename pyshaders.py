@@ -3,6 +3,7 @@
 ''MIT License
 
 Copyright (c) 2016 Gabriel Dubé
+Copyright (c) 2020 George Zhang
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +53,7 @@ from ctypes import c_char, c_uint, cast, POINTER, pointer, byref
 import weakref, itertools
 from collections import namedtuple
 from collections.abc import Sequence
+from contextlib import contextmanager
 
 from sys import modules
 from importlib import import_module
@@ -730,6 +732,21 @@ class ShaderProgram(object):
         " Remove the current shader program "
         glUseProgram(0)
         
+    
+    @contextmanager
+    def using(self):
+        " Return a context manager to use the shader program in the with-block "
+        previous = current_program()
+        if previous is not None:
+            previous.clear()
+        self.use()
+        try:
+            yield
+        finally:
+            self.clear()
+            if previous is not None:
+                previous.use()
+    
     def __bool__(self):
         return self.valid()
         

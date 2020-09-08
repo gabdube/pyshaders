@@ -5,6 +5,13 @@
 - [1.3.0](#onethreezero)
 - [1.4.0](#onefourzero)
 - [1.4.1](#onefourone)
+- [1.4.2](#onefourtwo)
+
+<a name="onefourtwo"/>
+### Pyshaders 1.4.2
+
+- ##### Main module
+	- Added context manager to shader. Use `with shader.using():`. Can be nested.
 
 <a name="onefourone"/>
 ### Pyshaders 1.4.1
