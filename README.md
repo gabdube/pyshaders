@@ -316,27 +316,59 @@ shader.uniforms.blushing_wombat = (5.0, 3.0, 2.0, 7.0, 1.0, 1.5)
 
 #### **Attributes**
 
-Shaders attributes can be queried just like the uniforms. Attributes can be used
-to get information on attributes arrays.
+Shaders attributes can be queried just like the uniforms.
 
-Shader attribute arrays can be easily enabled and then disabled using the methods *enable* and *disable*.  
-The method "point_to" can be used to wrap glVertexAttribPointer.
+The main reason why you would want to query attributes data is to setup vertex array objects (vao).
 
-In order to quickly enable/disable the shader attributes, shader.enable_all_attributes / shader.disable_all_attributes
+When creating a new vertex buffer array, you will want to query the attribute in the shader and enable them.
+By the time you loaded your shader, Pyshaders as already queried the attributes. You can access them using `my_shader.attributes.my_attribute_name`. After that, all that's left for you is to enable the attribute using the `enable` function and then define the vertex attribute data using `point_to`
+
+* The `enable` method is a wrapper over `glEnableVertexAttribArray`
+* The `point_to` method is a wrapper over `glVertexAttribPointer`.
+
+In order to quickly enable/disable the shader attributes, `shader.enable_all_attributes` / `shader.disable_all_attributes`
 can be used.
+
+Note that if your shader use integer attributes ex: `layout(location = 0)in ivec3 position;`, you will have to call
+`glVertexAttribIPointer` directly as `point_to` only works with floating points.
 
 See the api section for more information you can query on attributes.
 
 Example:
 ```python
-# In the shader
-# layout(location = 0)in vec3 vertex;
-attribute = shader.attributes.vertex
+from pyglet.gl import *
+from ctypes import byref, c_uint
 
-attribute.enable()
-attribute.point_to(8, GL_DOUBLE, 3, True, 4)
-# Draw something
-attribute.disable()
+# Compile our shaders
+shader = from_files_names("main.vert", "main.frag")
+shader.use()
+
+# Creates a vao
+vao = c_uint(0)
+glCreateVertexArrays(1, byref(vao))
+glBindVertexArray(vao)
+
+# Create/Bind the array buffer (creation omitted)
+glBindBuffer(GL_ARRAY_BUFFER, array_buffer)
+
+# Enable the attributes
+# In the shader: `layout(location = 0)in vec3 position;`
+position = shader.attributes.position
+position.enable()  # Equivalent to glEnableVertexAttribArray(position_attribute_index)
+position.point_to(8, GL_DOUBLE, 3, False, 4)  # glVertexAttribPointer(position_attribute_index, 3, GL_DOUBLE, False, 4, 8)
+
+# Instead of calling `attribute.enable` on each attribute you can use `shader.enable_all_attributes`
+# shader.enable_all_attributes()
+
+# Once point to has been called, you can always read back the data using the attibute accessor
+print(position.normalized == False)
+print(position.ptr_type == GL_DOUBLE)
+print(position.size == 3)
+print(position.stride == 4)
+
+# Cleanup
+glBindVertexArray(c_uint(0))
+glBindBuffer(GL_ARRAY_BUFFER, c_uint(0))
 ```
 
 
@@ -749,12 +781,12 @@ print(program)
 > Call glVertexAttribPointer with the supplied parameters. The attributes
 >  "type" and "size" are handled by the library. Attrbute shader must be in use.
 >            
->  offset:     Offset of the data in bytes
->  type:       Type of the pointed data. Must be a GL_* constant such as GL_FLOAT.
->  size:       Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, or 4.
->  normalized: Specifies whether fixed-point data values should be normalized 
+>- offset:     Offset of the data in bytes
+>- type:       Type of the pointed data. Must be a GL_* constant such as GL_FLOAT.
+>- size:       Specifies the number of components per generic vertex attribute. Must be 1, 2, 3, or 4.
+>- normalized: Specifies whether fixed-point data values should be normalized 
 >              (True) or converted directly as fixed-point values (GL_FALSE) 
->  stride:     Specifies the byte offset between consecutive generic vertex attributes.
+>- stride:     Specifies the byte offset between consecutive generic vertex attributes.
 
 
 <a name="future"></a>
